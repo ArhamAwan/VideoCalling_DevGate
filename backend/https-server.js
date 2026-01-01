@@ -1,10 +1,24 @@
 const express = require("express");
-const http = require("http");
+const https = require("https");
+const fs = require("fs");
 const socketIo = require("socket.io");
 const path = require("path");
 
 const app = express();
-const server = http.createServer(app);
+
+// Create self-signed certificate (for development only)
+const selfsigned = require("selfsigned");
+const attrs = [{ name: "commonName", value: "localhost" }];
+const pems = selfsigned.generate(attrs, { days: 365 });
+
+const server = https.createServer(
+  {
+    key: pems.private,
+    cert: pems.cert,
+  },
+  app
+);
+
 const io = socketIo(server, {
   cors: {
     origin: "*",
@@ -12,7 +26,7 @@ const io = socketIo(server, {
   },
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3443;
 
 // Serve static files from frontend directory
 app.use(express.static(path.join(__dirname, "../frontend")));
@@ -89,7 +103,24 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log("WebRTC signaling server ready");
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`HTTPS Server running on https://localhost:${PORT}`);
+  console.log(`Network access: https://[YOUR_IP]:${PORT}`);
+  console.log("WebRTC signaling server ready (HTTPS)");
+  console.log(
+    "⚠️  You will need to accept the self-signed certificate warning"
+  );
+
+  // Try to show the actual network IP
+  const os = require("os");
+  const networkInterfaces = os.networkInterfaces();
+
+  console.log("\nAvailable on your network:");
+  Object.keys(networkInterfaces).forEach((interfaceName) => {
+    networkInterfaces[interfaceName].forEach((interface) => {
+      if (interface.family === "IPv4" && !interface.internal) {
+        console.log(`  https://${interface.address}:${PORT}`);
+      }
+    });
+  });
 });
