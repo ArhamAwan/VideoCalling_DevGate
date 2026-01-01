@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Call App</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h2>Video Call</h2>
+
+    <div class="video-container">
+      <div class="video-wrapper">
+        <video id="localVideo" autoplay playsinline muted></video>
+        <div class="video-label">You</div>
+      </div>
+      <div class="video-wrapper">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="video-label">Remote</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="toggleCam">Camera</button>
+      <button id="toggleMic">Mic</button>
+      <button id="joinRoom">Join Room</button>
+    </div>
+
+    <div class="status">
+      <div class="connecting">
+        <div class="spinner"></div>
+        <span>Connecting...</span>
+      </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
