@@ -1,0 +1,25 @@
+{
+  "name": "video-call-app",
+  "version": "1.0.0",
+  "description": "WebRTC video calling application with Socket.IO signaling",
+  "main": "backend/index.js",
+  "scripts": {
+    "start": "node backend/index.js",
+    "dev": "nodemon backend/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "webrtc",
+    "video-call",
+    "socket.io",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT"
+}
