@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 node_modules/
 .env
 npm-debug.log
@@ -5,3 +6,50 @@ yarn-error.log
 dist/
 build/
 .DS_Store
+=======
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Vite
+.vite/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+.temp/
+>>>>>>> 678b215766b1cb7e65d57462123864db7130fffc
