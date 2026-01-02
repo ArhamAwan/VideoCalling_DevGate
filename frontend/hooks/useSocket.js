@@ -29,9 +29,9 @@ export function useSocket() {
     };
   }, []);
 
-  const joinRoom = (roomId) => {
+  const joinRoom = (roomId, userName) => {
     if (socketRef.current) {
-      socketRef.current.emit('join-room', roomId);
+      socketRef.current.emit('join-room', roomId, userName);
     }
   };
 

@@ -36,8 +36,8 @@ const rooms = new Map();
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-room", (roomId) => {
-    console.log(`User ${socket.id} joining room: ${roomId}`);
+  socket.on("join-room", (roomId, userName) => {
+    console.log(`User ${socket.id} (${userName}) joining room: ${roomId}`);
 
     // Leave any previous rooms
     socket.rooms.forEach((room) => {
@@ -51,17 +51,21 @@ io.on("connection", (socket) => {
 
     // Initialize room if it doesn't exist
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, new Set());
+      rooms.set(roomId, new Map()); // Change from Set to Map to store userData
     }
 
     const room = rooms.get(roomId);
-    room.add(socket.id);
+    room.set(socket.id, { name: userName || `User ${socket.id.substr(0, 4)}` });
 
     // Notify others in the room
-    socket.to(roomId).emit("user-joined", socket.id);
+    socket.to(roomId).emit("user-joined", { id: socket.id, name: userName });
+    console.log(`Emitted user-joined for ${socket.id} to room ${roomId}`);
 
     // Send current room users to the new user
-    const otherUsers = Array.from(room).filter((id) => id !== socket.id);
+    const otherUsers = Array.from(room.entries())
+      .filter(([id]) => id !== socket.id)
+      .map(([id, data]) => ({ id, name: data.name }));
+
     socket.emit("room-users", otherUsers);
 
     console.log(`Room ${roomId} now has ${room.size} users`);

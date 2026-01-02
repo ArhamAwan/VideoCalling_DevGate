@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Generate self-signed certificate for HTTPS
 const attrs = [{ name: 'commonName', value: 'localhost' }];
-const pems = selfsigned.generate(attrs, { days: 365 });
+const pems = selfsigned.generate(attrs, { days: 365, keySize: 2048 });
 
 export default defineConfig({
   plugins: [react()],

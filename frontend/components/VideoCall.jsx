@@ -4,7 +4,7 @@ import ParticipantsPanel from "./ParticipantsPanel";
 import ChatPanel from "./ChatPanel";
 import ControlBar from "./ControlBar";
 
-function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, socket }) {
+function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, socket, userName }) {
   const localVideoRef = useRef(null);
   const videoContainerRef = useRef(null);
   const [cameraEnabled, setCameraEnabled] = useState(true);
@@ -33,14 +33,15 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   useEffect(() => {
     if (!socket) return;
 
-    const handleUserJoined = (userId) => {
+    const handleUserJoined = ({ id: userId, name: userName }) => {
+      console.log("User joined:", userId, userName);
       setParticipants((prev) => {
         if (!prev.find((p) => p.id === userId)) {
           return [
             ...prev,
             {
               id: userId,
-              name: `User ${userId.substring(0, 8)}`,
+              name: userName || `User ${userId.substring(0, 8)}`,
               micEnabled: true,
               cameraEnabled: true,
             },
@@ -50,15 +51,32 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
       });
     };
 
+    const handleRoomUsers = (users) => {
+      console.log("Received room users:", users);
+      setParticipants((prev) => {
+        const newParticipants = users
+          .filter((user) => !prev.find((p) => p.id === (user.id || user)))
+          .map((user) => ({
+            id: user.id || user,
+            name: user.name || `User ${(user.id || user).substring(0, 8)}`,
+            micEnabled: true,
+            cameraEnabled: true,
+          }));
+        return [...prev, ...newParticipants];
+      });
+    };
+
     const handleUserLeft = (userId) => {
       setParticipants((prev) => prev.filter((p) => p.id !== userId));
     };
 
     socket.on("user-joined", handleUserJoined);
+    socket.on("room-users", handleRoomUsers);
     socket.on("user-left", handleUserLeft);
 
     return () => {
       socket.off("user-joined", handleUserJoined);
+      socket.off("room-users", handleRoomUsers);
       socket.off("user-left", handleUserLeft);
     };
   }, [socket]);
@@ -102,7 +120,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
       setParticipants([
         {
           id: currentUserId,
-          name: "You",
+          name: userName || "You",
           micEnabled: micEnabled,
           cameraEnabled: cameraEnabled,
         },

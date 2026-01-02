@@ -3,7 +3,7 @@ import { useRef, useCallback } from 'react';
 export function useWebRTC(socket, localStream, setIsConnecting) {
   const peersRef = useRef(new Map());
   const videoContainerRef = useRef(null);
-  
+
   // Expose ref setter
   const setVideoContainerRef = useCallback((ref) => {
     videoContainerRef.current = ref;
@@ -67,7 +67,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     removeVideoElement(userId);
 
     const videoContainer = videoContainerRef.current;
-    
+
     // Check if secondary videos wrapper exists, if not create it
     let secondaryWrapper = videoContainer.querySelector('.secondary-videos-wrapper');
     if (!secondaryWrapper) {
@@ -105,7 +105,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     const wrapper = document.getElementById(`wrapper-${userId}`);
     if (wrapper) {
       wrapper.remove();
-      
+
       // Remove secondary wrapper if empty
       if (videoContainerRef.current) {
         const secondaryWrapper = videoContainerRef.current.querySelector('.secondary-videos-wrapper');
@@ -124,14 +124,29 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
   const createPeer = useCallback((stream) => {
     if (!socket) return;
 
-    const handleUserJoined = async (userId) => {
+    const handleUserJoined = async (userData) => {
+      const userId = userData.id || userData; // Handle object or string (legacy)
       await createPeerConnection(userId, true);
     };
 
-    const handleRoomUsers = async (userIds) => {
-      for (const userId of userIds) {
+    const handleRoomUsers = async (users) => {
+      // If users is empty (we are the first one), stop connecting
+      if (!users || users.length === 0) {
+        setIsConnecting(false);
+        return;
+      }
+
+      for (const user of users) {
+        const userId = user.id || user; // Handle object or string
         await createPeerConnection(userId, false);
       }
+
+      // We've initiated connections, stopping loading state
+      // Note: Ideally we wait for connection, but for UX responsiveness we can stop here
+      // or wait for at least one connection if there are peers.
+      // For now, let's rely on ontrack for peers, but if we have peers and fail to connect, we might get stuck.
+      // Safer to just disable loading here as we have joined the room.
+      setIsConnecting(false);
     };
 
     const handleUserLeft = (userId) => {
