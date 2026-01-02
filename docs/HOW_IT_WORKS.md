@@ -1,6 +1,7 @@
 # How the Video Call Application Works
 
 ## Table of Contents
+
 1. [Overview](#overview)
 2. [Architecture](#architecture)
 3. [Application Flow](#application-flow)
@@ -22,6 +23,7 @@ This is a **WebRTC-based video calling application** that enables real-time peer
 - **Vanilla JavaScript** (ES6 modules) for the frontend
 
 ### Key Features
+
 - Multi-user video calls (supports unlimited participants)
 - Real-time audio and video streaming
 - Camera and microphone controls
@@ -50,6 +52,7 @@ The application follows a **hybrid architecture**:
 ### Two Types of Connections:
 
 1. **Signaling Connection (Socket.IO)**
+
    - Used for exchanging WebRTC negotiation messages
    - Goes through the server
    - Handles: offers, answers, ICE candidates, user presence
@@ -77,6 +80,7 @@ When a user opens the application:
 ```
 
 **Files Involved:**
+
 - `index.html` → Loads the page structure
 - `app.js` → Orchestrates initialization
 - `media.js` → Handles `getUserMedia()` API
@@ -98,6 +102,7 @@ When the user clicks "Join Room":
 ```
 
 **Backend Process:**
+
 - Maintains a `Map<roomId, Set<socketId>>` to track users per room
 - Emits `"user-joined"` to notify existing users
 - Emits `"room-users"` to send the new user a list of existing participants
@@ -152,41 +157,48 @@ When a user leaves:
 ### Backend (`backend/index.js` or `backend/https-server.js`)
 
 **Responsibilities:**
+
 - Serve static frontend files
 - Handle Socket.IO connections
 - Manage room membership
 - Relay WebRTC signaling messages
 
 **Key Data Structures:**
+
 ```javascript
 const rooms = new Map(); // Map<roomId, Set<socketId>>
 ```
 
 **Socket Events Handled:**
+
 - `connection` - New user connects
 - `join-room` - User joins a room
 - `signal` - WebRTC signaling messages (offers, answers, ICE candidates)
 - `disconnect` - User leaves
 
 **Server Options:**
+
 - **HTTP Server** (`index.js`): Runs on port 3000
 - **HTTPS Server** (`https-server.js`): Runs on port 3443, uses self-signed certificates
 
 ### Frontend Modules
 
 #### 1. `app.js` - Main Orchestrator
+
 - Initializes the application
 - Coordinates all modules
 - Handles "Join Room" button click
 - Manages the main application flow
 
 #### 2. `socket.js` - Socket.IO Client
+
 - Establishes Socket.IO connection
 - Auto-detects HTTP/HTTPS protocol
 - Connects to appropriate port (3000 or 3443)
 - Exports `joinRoom()` function
 
 #### 3. `webrtc.js` - WebRTC Peer Management
+
 - Manages multiple peer connections (Map structure)
 - Creates RTCPeerConnection instances
 - Handles offer/answer/ICE candidate exchange
@@ -194,6 +206,7 @@ const rooms = new Map(); // Map<roomId, Set<socketId>>
 - Updates video layout based on participant count
 
 **Key Functions:**
+
 - `createPeer(stream)` - Sets up peer connection listeners
 - `createPeerConnection(userId, shouldCreateOffer)` - Creates individual peer connection
 - `updateVideoLayout()` - Adjusts CSS grid based on video count
@@ -201,12 +214,14 @@ const rooms = new Map(); // Map<roomId, Set<socketId>>
 - `removeVideoElement(userId)` - Removes video element
 
 #### 4. `media.js` - Media Capture
+
 - Requests camera/microphone access
 - Uses `navigator.mediaDevices.getUserMedia()`
 - Returns MediaStream object
 - Displays local video
 
 #### 5. `ui.js` - User Interface
+
 - Sets up camera/mic toggle buttons
 - Manages button states and styling
 - Shows/hides connecting spinner
@@ -215,6 +230,7 @@ const rooms = new Map(); // Map<roomId, Set<socketId>>
 ### Styling (`styles.css`)
 
 **Dynamic Video Layout:**
+
 - **1 video**: Single column, max-width 400px
 - **2 videos**: 2 columns side-by-side
 - **3 videos**: 2x2 grid (first video spans full width)
@@ -222,6 +238,7 @@ const rooms = new Map(); // Map<roomId, Set<socketId>>
 - **5+ videos**: Auto-fit grid (min 200px per video)
 
 **Responsive Design:**
+
 - Mobile breakpoints at 768px and 480px
 - Stacks videos vertically on small screens
 - Adjusts button sizes and spacing
@@ -233,16 +250,18 @@ const rooms = new Map(); // Map<roomId, Set<socketId>>
 ### Step-by-Step WebRTC Negotiation
 
 #### 1. **Peer Connection Creation**
+
 ```javascript
 const peer = new RTCPeerConnection({
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
-  ]
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
 });
 ```
 
 #### 2. **Add Local Media Tracks**
+
 ```javascript
 localStream.getTracks().forEach((track) => {
   peer.addTrack(track, localStream);
@@ -250,6 +269,7 @@ localStream.getTracks().forEach((track) => {
 ```
 
 #### 3. **Create Offer (Initiator)**
+
 ```javascript
 const offer = await peer.createOffer();
 await peer.setLocalDescription(offer);
@@ -257,6 +277,7 @@ socket.emit("signal", { offer, to: userId });
 ```
 
 #### 4. **Receive Offer (Responder)**
+
 ```javascript
 await peer.setRemoteDescription(offer);
 const answer = await peer.createAnswer();
@@ -265,12 +286,15 @@ socket.emit("signal", { answer, to: from });
 ```
 
 #### 5. **Receive Answer (Initiator)**
+
 ```javascript
 await peer.setRemoteDescription(answer);
 ```
 
 #### 6. **ICE Candidate Exchange**
+
 Both sides exchange ICE candidates as they're discovered:
+
 ```javascript
 peer.onicecandidate = (event) => {
   if (event.candidate) {
@@ -280,6 +304,7 @@ peer.onicecandidate = (event) => {
 ```
 
 #### 7. **Receive Remote Stream**
+
 ```javascript
 peer.ontrack = (event) => {
   addVideoElement(userId, event.streams[0]);
@@ -290,6 +315,7 @@ peer.ontrack = (event) => {
 ### STUN Servers
 
 The application uses Google's public STUN servers for NAT traversal:
+
 - `stun:stun.l.google.com:19302`
 - `stun:stun1.l.google.com:19302`
 
@@ -329,11 +355,13 @@ User A                          Server                          User B
 ### Signal Message Types
 
 1. **Offer**: Initial connection proposal
+
    ```javascript
    { offer: RTCSessionDescription, to: "socketId" }
    ```
 
 2. **Answer**: Response to offer
+
    ```javascript
    { answer: RTCSessionDescription, to: "socketId" }
    ```
@@ -378,6 +406,7 @@ npm install
 ### Running the Application
 
 **HTTP Server (Port 3000):**
+
 ```bash
 npm start
 # or for development with auto-reload:
@@ -385,6 +414,7 @@ npm run dev
 ```
 
 **HTTPS Server (Port 3443):**
+
 ```bash
 npm run https
 # or for development with auto-reload:
@@ -418,24 +448,28 @@ npm run https-dev
 ## Key Concepts
 
 ### WebRTC (Web Real-Time Communication)
+
 - Enables direct peer-to-peer communication
 - Handles media encoding/decoding
 - Manages network traversal (NAT, firewalls)
 - Provides encryption for media streams
 
 ### Signaling
+
 - Process of exchanging connection information
 - Required because WebRTC doesn't include signaling
 - Can use any transport mechanism (WebSocket, HTTP, etc.)
 - This app uses Socket.IO for signaling
 
 ### ICE (Interactive Connectivity Establishment)
+
 - Protocol for establishing connections
 - Discovers network paths between peers
 - Uses STUN servers to find public IP addresses
 - May use TURN servers as relay if direct connection fails
 
 ### Peer Connection
+
 - Represents a connection to a remote peer
 - Manages media tracks (audio/video)
 - Handles connection state
@@ -446,11 +480,13 @@ npm run https-dev
 ## Troubleshooting
 
 ### Camera/Microphone Not Working
+
 - Check browser permissions
 - Ensure HTTPS is used (required for getUserMedia in some browsers)
 - Verify camera/mic are not being used by another application
 
 ### Users Can't See Each Other
+
 - Check browser console for errors
 - Verify Socket.IO connection is established
 - Check network connectivity
@@ -458,6 +494,7 @@ npm run https-dev
 - Try using HTTPS server for better compatibility
 
 ### Connection Fails Behind NAT
+
 - Add TURN servers to RTCPeerConnection configuration
 - Use a TURN service provider (e.g., Twilio, Xirsys)
 
@@ -466,6 +503,7 @@ npm run https-dev
 ## Future Enhancements
 
 Potential improvements:
+
 - Room ID input field
 - User names/identities
 - Screen sharing
@@ -479,4 +517,3 @@ Potential improvements:
 ---
 
 **Last Updated:** 2024
-
