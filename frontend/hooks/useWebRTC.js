@@ -31,9 +31,8 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       addVideoElement(userId, event.streams[0], storedName);
       updateVideoLayout();
 
-      if (peersRef.current.size === 1) {
-        setIsConnecting(false);
-      }
+      // Dismiss connecting overlay when we receive any track
+      setIsConnecting(false);
     };
 
     // Handle ICE candidates
@@ -43,6 +42,13 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       }
     };
 
+    // Track connection state changes
+    peer.onconnectionstatechange = () => {
+      if (peer.connectionState === 'connected' || peer.connectionState === 'completed') {
+        // Connection established, dismiss connecting overlay
+        setIsConnecting(false);
+      }
+    };
 
     peersRef.current.set(userId, peer);
 
@@ -126,6 +132,11 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
   const createPeer = useCallback((stream) => {
     if (!socket) return;
 
+    // Set a timeout to dismiss connecting overlay if stuck
+    const connectingTimeout = setTimeout(() => {
+      setIsConnecting(false);
+    }, 5000); // 5 second timeout
+
     const handleUserJoined = async (userId) => {
       await createPeerConnection(userId, true);
     };
@@ -146,15 +157,22 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
         });
       }
 
-      // If no other users, dismiss connecting overlay
+      // If no other users, dismiss connecting overlay immediately
       if (userIds.length === 0) {
         setIsConnecting(false);
         return;
       }
 
+      // Create peer connections for existing users
       for (const userId of userIds) {
         await createPeerConnection(userId, false);
       }
+
+      // Dismiss connecting overlay after creating peer connections
+      // Tracks will arrive asynchronously, but we've initiated the connections
+      setTimeout(() => {
+        setIsConnecting(false);
+      }, 1000); // Short delay to allow connections to initialize
     };
 
     const handleUserLeft = (userId) => {
@@ -203,6 +221,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
 
     // Return cleanup function
     return () => {
+      clearTimeout(connectingTimeout);
       if (socket) {
         socket.off('user-joined', handleUserJoined);
         socket.off('room-users', handleRoomUsers);
@@ -210,7 +229,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
         socket.off('signal', handleSignal);
       }
     };
-  }, [socket, createPeerConnection]);
+  }, [socket, createPeerConnection, setIsConnecting]);
 
   return {
     createPeer,
