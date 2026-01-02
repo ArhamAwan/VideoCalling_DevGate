@@ -5,6 +5,7 @@ function HomePage({ onCreateCall, onJoinCall, error }) {
   const [roomId, setRoomId] = useState("");
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [generatedRoomId, setGeneratedRoomId] = useState("");
+  const [roomCreated, setRoomCreated] = useState(false);
 
   const handleCreateCall = () => {
     if (!userName.trim()) {
@@ -12,7 +13,14 @@ function HomePage({ onCreateCall, onJoinCall, error }) {
     }
     const newRoomId = crypto.randomUUID();
     setGeneratedRoomId(newRoomId);
-    onCreateCall(userName, newRoomId);
+    setRoomCreated(true);
+    // Don't navigate immediately - let user see the room ID first
+  };
+
+  const handleStartCall = () => {
+    if (generatedRoomId && userName.trim()) {
+      onCreateCall(userName, generatedRoomId);
+    }
   };
 
   const handleJoinCall = () => {
@@ -50,7 +58,7 @@ function HomePage({ onCreateCall, onJoinCall, error }) {
             />
           </div>
 
-          {generatedRoomId && (
+          {roomCreated && generatedRoomId && (
             <div className="room-id-display">
               <label>Room ID (Share this with others)</label>
               <div className="room-id-container">
@@ -68,6 +76,7 @@ function HomePage({ onCreateCall, onJoinCall, error }) {
                   📋
                 </button>
               </div>
+              <p className="room-id-hint">Share this Room ID with others who want to join your call</p>
             </div>
           )}
 
@@ -88,31 +97,42 @@ function HomePage({ onCreateCall, onJoinCall, error }) {
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-actions">
-            <button
-              onClick={handleCreateCall}
-              className="btn btn-primary"
-              disabled={!userName.trim()}
-            >
-              Create Call
-            </button>
-            <button
-              onClick={() => {
-                setShowJoinInput(!showJoinInput);
-                setRoomId("");
-                setGeneratedRoomId("");
-              }}
-              className="btn btn-secondary"
-              disabled={!userName.trim()}
-            >
-              {showJoinInput ? "Cancel" : "Join Call"}
-            </button>
-            {showJoinInput && (
+            {!roomCreated ? (
+              <>
+                <button
+                  onClick={handleCreateCall}
+                  className="btn btn-primary"
+                  disabled={!userName.trim()}
+                >
+                  Create Call
+                </button>
+                <button
+                  onClick={() => {
+                    setShowJoinInput(!showJoinInput);
+                    setRoomId("");
+                    setGeneratedRoomId("");
+                  }}
+                  className="btn btn-secondary"
+                  disabled={!userName.trim()}
+                >
+                  {showJoinInput ? "Cancel" : "Join Call"}
+                </button>
+                {showJoinInput && (
+                  <button
+                    onClick={handleJoinCall}
+                    className="btn btn-primary"
+                    disabled={!userName.trim() || !roomId.trim()}
+                  >
+                    Join
+                  </button>
+                )}
+              </>
+            ) : (
               <button
-                onClick={handleJoinCall}
+                onClick={handleStartCall}
                 className="btn btn-primary"
-                disabled={!userName.trim() || !roomId.trim()}
               >
-                Join
+                Start Call
               </button>
             )}
           </div>

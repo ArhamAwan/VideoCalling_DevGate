@@ -36,6 +36,56 @@ body {
   align-items: flex-start;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.room-id-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f8f8;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.room-id-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.room-id-value {
+  font-family: monospace;
+  font-size: 12px;
+  color: #1a1a1a;
+  font-weight: 600;
+  padding: 4px 8px;
+  background: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #e5e5e5;
+}
+
+.copy-room-id-btn {
+  padding: 4px 10px;
+  border: 1px solid #4a90e2;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #4a90e2;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.copy-room-id-btn:hover {
+  background: #4a90e2;
+  color: white;
+}
+
 .header-left {
   display: flex;
   flex-direction: column;
@@ -644,15 +694,22 @@ video {
   flex-direction: column;
   gap: 8px;
   padding: 16px;
-  background: #f8f8f8;
+  background: #f0f7ff;
   border-radius: 8px;
-  border: 1px solid #e5e5e5;
+  border: 2px solid #4a90e2;
 }
 
 .room-id-display label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #4a90e2;
+}
+
+.room-id-hint {
+  font-size: 12px;
   color: #666;
+  margin-top: 4px;
+  font-style: italic;
 }
 
 .room-id-container {

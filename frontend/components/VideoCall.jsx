@@ -161,7 +161,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
 
   return (
     <div className="video-call-container">
-      <Header />
+      <Header roomId={roomId} />
 
       <div className="main-content">
         <div className="video-area">
