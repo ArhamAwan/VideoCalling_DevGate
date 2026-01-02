@@ -14,7 +14,6 @@ async function init() {
     joinRoom("test-room");
     createPeer(stream);
     await makeOffer();
-    // hideConnecting will be called when connection is established
   };
 }
 
