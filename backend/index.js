@@ -80,7 +80,7 @@ io.on("connection", (socket) => {
     room.add(socket.id);
 
     // Notify others in the room
-    socket.to(roomId).emit("user-joined", socket.id);
+    socket.to(roomId).emit("user-joined", { id: socket.id, name: userName });
 
     // Send current room users with names to the new user
     const otherUsers = Array.from(room)
@@ -178,10 +178,10 @@ io.on("connection", (socket) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log("WebRTC signaling server ready");
-  
+
   // Show network IP addresses
   const networkInterfaces = os.networkInterfaces();
-  
+
   console.log("\nAvailable on your network:");
   Object.keys(networkInterfaces).forEach((interfaceName) => {
     networkInterfaces[interfaceName].forEach((iface) => {

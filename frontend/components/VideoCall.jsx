@@ -51,14 +51,17 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   useEffect(() => {
     if (!socket) return;
 
-    const handleUserJoined = (userId) => {
+    const handleUserJoined = (payload) => {
+      const userId = payload.id || payload;
+      const newUserName = payload.name || userName || `User ${userId.substring(0, 8)}`;
+
       setParticipants((prev) => {
         if (!prev.find((p) => p.id === userId)) {
           return [
             ...prev,
             {
               id: userId,
-              name: `User ${userId.substring(0, 8)}`, // Will be updated by room-users event
+              name: newUserName,
               micEnabled: true,
               cameraEnabled: true,
             },
@@ -77,7 +80,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
           micEnabled: true,
           cameraEnabled: true,
         }));
-        
+
         // Add local user
         setParticipants([
           {
