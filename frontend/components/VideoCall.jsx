@@ -4,7 +4,7 @@ import ParticipantsPanel from "./ParticipantsPanel";
 import ChatPanel from "./ChatPanel";
 import ControlBar from "./ControlBar";
 
-function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, socket }) {
+function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, socket, userName, roomId }) {
   const localVideoRef = useRef(null);
   const videoContainerRef = useRef(null);
   const [cameraEnabled, setCameraEnabled] = useState(true);
@@ -14,6 +14,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   const [participants, setParticipants] = useState([]);
   const [messages, setMessages] = useState([]);
   const [currentUserId] = useState(() => socket?.id || "You");
+  const displayName = userName || "You";
 
   useEffect(() => {
     if (setVideoContainerRef && videoContainerRef.current) {
@@ -40,7 +41,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
             ...prev,
             {
               id: userId,
-              name: `User ${userId.substring(0, 8)}`,
+              name: `User ${userId.substring(0, 8)}`, // Will be updated by room-users event
               micEnabled: true,
               cameraEnabled: true,
             },
@@ -50,18 +51,43 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
       });
     };
 
+    const handleRoomUsers = (users) => {
+      // users is array of { id, name } objects
+      if (Array.isArray(users) && users.length > 0) {
+        const otherParticipants = users.map(({ id, name }) => ({
+          id,
+          name: name || `User ${id.substring(0, 8)}`,
+          micEnabled: true,
+          cameraEnabled: true,
+        }));
+        
+        // Add local user
+        setParticipants([
+          {
+            id: currentUserId,
+            name: displayName,
+            micEnabled: micEnabled,
+            cameraEnabled: cameraEnabled,
+          },
+          ...otherParticipants,
+        ]);
+      }
+    };
+
     const handleUserLeft = (userId) => {
       setParticipants((prev) => prev.filter((p) => p.id !== userId));
     };
 
     socket.on("user-joined", handleUserJoined);
     socket.on("user-left", handleUserLeft);
+    socket.on("room-users", handleRoomUsers);
 
     return () => {
       socket.off("user-joined", handleUserJoined);
       socket.off("user-left", handleUserLeft);
+      socket.off("room-users", handleRoomUsers);
     };
-  }, [socket]);
+  }, [socket, currentUserId, displayName, micEnabled, cameraEnabled]);
 
   useEffect(() => {
     if (isInCall) {
@@ -102,7 +128,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
       setParticipants([
         {
           id: currentUserId,
-          name: "You",
+          name: displayName,
           micEnabled: micEnabled,
           cameraEnabled: cameraEnabled,
         },
@@ -118,7 +144,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
 
   const handleSendMessage = (text) => {
     const newMessage = {
-      author: "You",
+      author: displayName,
       text: text,
       time: new Date().toLocaleTimeString("en-US", {
         hour: "2-digit",
@@ -148,7 +174,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
                 muted
                 className="local-video"
               />
-              <div className="video-label">You</div>
+              <div className="video-label">{displayName}</div>
               <div className="video-controls-overlay">
                 <button className="fullscreen-btn">⛶</button>
                 {micEnabled && <div className="audio-indicator">🔊</div>}

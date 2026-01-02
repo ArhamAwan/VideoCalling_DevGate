@@ -26,7 +26,9 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
 
     // Handle incoming stream
     peer.ontrack = (event) => {
-      addVideoElement(userId, event.streams[0]);
+      // Get stored user name if available
+      const storedName = peersRef.current.get(`name-${userId}`);
+      addVideoElement(userId, event.streams[0], storedName);
       updateVideoLayout();
 
       if (peersRef.current.size === 1) {
@@ -60,7 +62,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     return peer;
   }, [localStream, socket, setIsConnecting]);
 
-  const addVideoElement = (userId, stream) => {
+  const addVideoElement = (userId, stream, userName = null) => {
     if (!videoContainerRef.current) return;
 
     // Remove existing video if it exists
@@ -88,7 +90,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
 
     const label = document.createElement('div');
     label.className = 'video-label';
-    label.textContent = `User ${userId.substring(0, 8)}`;
+    label.textContent = userName || `User ${userId.substring(0, 8)}`;
 
     // Add mic status icon (placeholder - would need to track actual status)
     const micStatus = document.createElement('div');
@@ -128,7 +130,28 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       await createPeerConnection(userId, true);
     };
 
-    const handleRoomUsers = async (userIds) => {
+    const handleRoomUsers = async (users) => {
+      // users can be array of strings (old format) or array of objects { id, name }
+      const userIds = Array.isArray(users) && users.length > 0 && typeof users[0] === 'object'
+        ? users.map(u => u.id)
+        : users;
+      
+      // Store user names for later use
+      if (Array.isArray(users) && users.length > 0 && typeof users[0] === 'object') {
+        users.forEach(({ id, name }) => {
+          if (!peersRef.current.has(id)) {
+            // Store name for when video element is created
+            peersRef.current.set(`name-${id}`, name);
+          }
+        });
+      }
+
+      // If no other users, dismiss connecting overlay
+      if (userIds.length === 0) {
+        setIsConnecting(false);
+        return;
+      }
+
       for (const userId of userIds) {
         await createPeerConnection(userId, false);
       }

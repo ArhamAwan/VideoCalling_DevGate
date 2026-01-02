@@ -45,12 +45,39 @@ if (fs.existsSync(frontendPath)) {
 
 // Store rooms and users
 const rooms = new Map();
+// Store user names: socketId -> userName
+const userNames = new Map();
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-room", (roomId) => {
-    console.log(`User ${socket.id} joining room: ${roomId}`);
+  // Check if room exists
+  socket.on("check-room-exists", (roomId, callback) => {
+    const exists = rooms.has(roomId);
+    if (typeof callback === "function") {
+      callback({ exists });
+    } else {
+      socket.emit("room-exists-response", { roomId, exists });
+    }
+  });
+
+  socket.on("join-room", (data) => {
+    // Support both old format (string) and new format (object)
+    const roomId = typeof data === "string" ? data : data.roomId;
+    const userName = typeof data === "string" ? null : data.userName;
+
+    console.log(`User ${socket.id} joining room: ${roomId}${userName ? ` as ${userName}` : ""}`);
+
+    // Validate room exists (for joining, not creating)
+    if (!rooms.has(roomId)) {
+      socket.emit("room-not-found", { roomId });
+      return;
+    }
+
+    // Store user name
+    if (userName) {
+      userNames.set(socket.id, userName);
+    }
 
     // Leave any previous rooms
     socket.rooms.forEach((room) => {
@@ -62,22 +89,59 @@ io.on("connection", (socket) => {
     // Join the new room
     socket.join(roomId);
 
-    // Initialize room if it doesn't exist
-    if (!rooms.has(roomId)) {
-      rooms.set(roomId, new Set());
-    }
-
     const room = rooms.get(roomId);
     room.add(socket.id);
 
     // Notify others in the room
     socket.to(roomId).emit("user-joined", socket.id);
 
-    // Send current room users to the new user
-    const otherUsers = Array.from(room).filter((id) => id !== socket.id);
+    // Send current room users with names to the new user
+    const otherUsers = Array.from(room)
+      .filter((id) => id !== socket.id)
+      .map((id) => ({
+        id,
+        name: userNames.get(id) || `User ${id.substring(0, 8)}`,
+      }));
     socket.emit("room-users", otherUsers);
 
     console.log(`Room ${roomId} now has ${room.size} users`);
+  });
+
+  // Create room (called when user creates a new call)
+  socket.on("create-room", (data) => {
+    const roomId = data.roomId;
+    const userName = data.userName;
+
+    console.log(`User ${socket.id} creating room: ${roomId} as ${userName}`);
+
+    // Store user name
+    if (userName) {
+      userNames.set(socket.id, userName);
+    }
+
+    // Leave any previous rooms
+    socket.rooms.forEach((room) => {
+      if (room !== socket.id) {
+        socket.leave(room);
+      }
+    });
+
+    // Create and join the new room
+    if (!rooms.has(roomId)) {
+      rooms.set(roomId, new Set());
+    }
+
+    const room = rooms.get(roomId);
+    room.add(socket.id);
+    socket.join(roomId);
+
+    // Send room-users event (empty array since they're alone)
+    socket.emit("room-users", []);
+
+    // Send confirmation
+    socket.emit("room-created", { roomId });
+
+    console.log(`Room ${roomId} created with ${room.size} users`);
   });
 
   socket.on("signal", (data) => {
@@ -100,6 +164,9 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+
+    // Remove user name
+    userNames.delete(socket.id);
 
     // Remove user from all rooms
     rooms.forEach((users, roomId) => {
