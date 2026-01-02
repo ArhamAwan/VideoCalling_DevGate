@@ -9,14 +9,7 @@ function ChatPanel({ messages, onSendMessage }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
+
 
   const handleSend = () => {
     if (messageText.trim()) {
@@ -40,19 +33,16 @@ function ChatPanel({ messages, onSendMessage }) {
       </div>
       {isExpanded && (
         <div className="panel-content chat-content">
-          <div className="chat-messages">
+          <div class="chat-messages">
             {messages.map((msg, index) => (
               <div key={index} className="chat-message">
                 <div className="message-header">
-                  <div className="message-avatar">
-                    {getInitials(msg.author)}
-                  </div>
-                  <div className="message-info">
-                    <span className="message-author">{msg.author}</span>
-                    <span className="message-time">{msg.time}</span>
-                  </div>
+                  <span className="message-author">{msg.author}</span>
                 </div>
-                <div className="message-text">{msg.text}</div>
+                <div className="message-content-wrapper">
+                  <div className="message-bubble">{msg.text}</div>
+                  <span className="message-time">{msg.time}</span>
+                </div>
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -67,7 +57,10 @@ function ChatPanel({ messages, onSendMessage }) {
               onKeyPress={handleKeyPress}
             />
             <button className="chat-send-btn" onClick={handleSend}>
-              ✈️
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 2L11 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
           </div>
         </div>
