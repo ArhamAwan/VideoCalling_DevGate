@@ -125,16 +125,22 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
       setParticipants((prev) => prev.filter((p) => p.id !== userId));
     };
 
+    const handleReceiveMessage = (message) => {
+      setMessages((prev) => [...prev, message]);
+    };
+
     socket.on("user-joined", handleUserJoined);
     socket.on("user-left", handleUserLeft);
     socket.on("room-users", handleRoomUsers);
+    socket.on("receive-message", handleReceiveMessage);
 
     return () => {
       socket.off("user-joined", handleUserJoined);
       socket.off("user-left", handleUserLeft);
       socket.off("room-users", handleRoomUsers);
+      socket.off("receive-message", handleReceiveMessage);
     };
-  }, [socket, currentUserId, displayName, micEnabled, cameraEnabled]);
+  }, [socket, currentUserId, displayName, micEnabled, cameraEnabled, userName]);
 
   useEffect(() => {
     if (isInCall) {
@@ -190,15 +196,29 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   };
 
   const handleSendMessage = (text) => {
+    const time = new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
     const newMessage = {
       author: displayName,
       text: text,
-      time: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      time: time,
     };
+
+    // Update local state
     setMessages((prev) => [...prev, newMessage]);
+
+    // Send to server
+    if (socket && roomId) {
+      socket.emit("send-message", {
+        roomId,
+        message: text,
+        time,
+        author: displayName
+      });
+    }
   };
 
   const handleOptions = () => {
@@ -227,7 +247,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
               {micEnabled && (
                 <div className="mic-status mic-unmuted">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+                    <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor" />
                   </svg>
                 </div>
               )}

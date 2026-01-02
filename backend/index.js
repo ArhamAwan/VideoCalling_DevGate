@@ -149,6 +149,18 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Chat messages
+  socket.on("send-message", (data) => {
+    const { roomId, message, time, author } = data;
+    // Broadcast to others in the room
+    socket.to(roomId).emit("receive-message", {
+      text: message,
+      author: author,
+      time: time,
+      from: socket.id
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
 
