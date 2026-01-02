@@ -15,12 +15,29 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   const [messages, setMessages] = useState([]);
   const [currentUserId] = useState(() => socket?.id || "You");
   const displayName = userName || "You";
+  const hasAutoJoined = useRef(false);
 
   useEffect(() => {
     if (setVideoContainerRef && videoContainerRef.current) {
       setVideoContainerRef(videoContainerRef.current);
     }
   }, [setVideoContainerRef]);
+
+  // Auto-join when component mounts if we have socket and roomId
+  useEffect(() => {
+    if (socket && roomId && !hasAutoJoined.current) {
+      hasAutoJoined.current = true;
+      setIsInCall(true);
+      setParticipants([
+        {
+          id: currentUserId,
+          name: displayName,
+          micEnabled: micEnabled,
+          cameraEnabled: cameraEnabled,
+        },
+      ]);
+    }
+  }, [socket, roomId, currentUserId, displayName, micEnabled, cameraEnabled]);
 
   useEffect(() => {
     if (stream && localVideoRef.current) {
