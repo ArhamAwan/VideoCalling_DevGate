@@ -127,55 +127,58 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  overflow-y: auto;
+  overflow: hidden;
+  background: #2d2d2d;
+  border-radius: 12px;
+  padding: 20px;
 }
 
-.video-container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  width: 100%;
+/* Grid container for all videos */
+.videos-grid-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  overflow: auto;
+  align-content: start;
+  padding: 4px;
 }
 
-/* Main video (first one) takes more space */
-.video-container .video-wrapper:first-child {
-  min-height: 400px;
+/* Ensure minimum 3 columns for better grid layout */
+@media (min-width: 1200px) {
+  .videos-grid-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-/* Secondary videos wrapper */
-.secondary-videos-wrapper {
-  display: flex;
-  flex-direction: row;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.secondary-videos-wrapper .video-wrapper {
-  max-height: 200px;
-  flex: 0 0 auto;
-  min-width: 200px;
-  max-width: 300px;
+@media (min-width: 1600px) {
+  .videos-grid-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .video-wrapper {
   position: relative;
-  background: #000;
-  border-radius: 12px;
+  background: #1a1a1a;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   aspect-ratio: 16/9;
+  min-height: 200px;
 }
 
-.video-wrapper.main-video {
-  min-height: 400px;
+/* Grid video - all equal sized */
+.video-wrapper.grid-video {
+  width: 100%;
+  height: 100%;
 }
 
 video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 6px;
+  position: relative;
+  z-index: 1;
 }
 
 .local-video {
@@ -186,7 +189,7 @@ video {
   position: absolute;
   bottom: 12px;
   left: 12px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
@@ -194,6 +197,7 @@ video {
   font-weight: 500;
   z-index: 2;
   backdrop-filter: blur(10px);
+  white-space: nowrap;
 }
 
 .video-controls-overlay {
@@ -209,48 +213,72 @@ video {
   background: rgba(255, 255, 255, 0.9);
   border: none;
   color: #333;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: background 0.2s;
+  font-size: 16px;
+  transition: all 0.2s;
 }
 
 .fullscreen-btn:hover {
   background: rgba(255, 255, 255, 1);
+  transform: scale(1.05);
 }
 
-.audio-indicator {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-}
-
-/* Mic status on secondary videos */
-.secondary-videos-wrapper .video-wrapper .mic-status {
+/* Audio indicator for main video - bottom right */
+.audio-indicator-bottom {
   position: absolute;
   bottom: 12px;
   right: 12px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(74, 144, 226, 0.9);
   color: white;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
   z-index: 2;
+  backdrop-filter: blur(10px);
+}
+
+.audio-indicator-bottom svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Mic status on grid videos - bottom right */
+.grid-video .mic-status {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+}
+
+.grid-video .mic-status.mic-unmuted {
+  background: rgba(74, 144, 226, 0.9);
+  color: white;
+}
+
+.grid-video .mic-status.mic-muted {
+  background: rgba(255, 68, 68, 0.9);
+  color: white;
+}
+
+.grid-video .mic-status svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Sidebar */
@@ -260,6 +288,7 @@ video {
   flex-direction: column;
   gap: 15px;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 /* Panel Styles */
