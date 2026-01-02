@@ -69,15 +69,24 @@ io.on("connection", (socket) => {
   });
 
   socket.on("signal", (data) => {
-    // Forward signaling data to all other users in the same room
-    socket.rooms.forEach((room) => {
-      if (room !== socket.id) {
-        socket.to(room).emit("signal", {
-          ...data,
-          from: socket.id,
-        });
-      }
-    });
+    // Handle targeted signaling (to specific user) or broadcast to room
+    if (data.to) {
+      // Send to specific user
+      socket.to(data.to).emit("signal", {
+        ...data,
+        from: socket.id,
+      });
+    } else {
+      // Broadcast to all users in the same room (legacy support)
+      socket.rooms.forEach((room) => {
+        if (room !== socket.id) {
+          socket.to(room).emit("signal", {
+            ...data,
+            from: socket.id,
+          });
+        }
+      });
+    }
   });
 
   socket.on("disconnect", () => {

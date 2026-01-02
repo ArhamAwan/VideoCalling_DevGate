@@ -7,7 +7,7 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000000 0%, #000000 100%);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -27,17 +27,52 @@ h2 {
 
 .video-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  max-width: 1200px;
+  gap: 15px;
+  max-width: 800px;
   width: 100%;
   margin-bottom: 30px;
 }
 
+/* Dynamic grid based on number of videos */
+.video-container.one-video {
+  grid-template-columns: 1fr;
+  max-width: 400px;
+}
+
+.video-container.two-videos {
+  grid-template-columns: 1fr 1fr;
+}
+
+.video-container.three-videos {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.video-container.three-videos .video-wrapper:first-child {
+  grid-column: 1 / -1;
+}
+
+.video-container.four-videos {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.video-container.many-videos {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 @media (max-width: 768px) {
-  .video-container {
+  .video-container,
+  .video-container.two-videos,
+  .video-container.three-videos,
+  .video-container.four-videos,
+  .video-container.many-videos {
     grid-template-columns: 1fr;
     gap: 15px;
+  }
+
+  .video-container.three-videos .video-wrapper:first-child {
+    grid-column: 1;
   }
 }
 
