@@ -76,16 +76,14 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
 
     const videoContainer = videoContainerRef.current;
     
-    // Check if secondary videos wrapper exists, if not create it
-    let secondaryWrapper = videoContainer.querySelector('.secondary-videos-wrapper');
-    if (!secondaryWrapper) {
-      secondaryWrapper = document.createElement('div');
-      secondaryWrapper.className = 'secondary-videos-wrapper';
-      videoContainer.appendChild(secondaryWrapper);
+    // Ensure it's the grid container
+    if (!videoContainer.classList.contains('videos-grid-container')) {
+      console.error('Video container is not a grid container');
+      return;
     }
 
     const videoWrapper = document.createElement('div');
-    videoWrapper.className = 'video-wrapper';
+    videoWrapper.className = 'video-wrapper grid-video';
     videoWrapper.id = `wrapper-${userId}`;
 
     const video = document.createElement('video');
@@ -98,34 +96,61 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     label.className = 'video-label';
     label.textContent = userName || `User ${userId.substring(0, 8)}`;
 
-    // Add mic status icon (placeholder - would need to track actual status)
+    // Add mic status icon - default to unmuted (blue)
+    // TODO: Track actual mic status from stream tracks
     const micStatus = document.createElement('div');
-    micStatus.className = 'mic-status';
-    micStatus.textContent = '🎤';
+    micStatus.className = 'mic-status mic-unmuted';
+    micStatus.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+      </svg>
+    `;
+    
+    // Store mic status element for later updates
+    peersRef.current.set(`mic-status-${userId}`, micStatus);
 
     videoWrapper.appendChild(video);
     videoWrapper.appendChild(label);
     videoWrapper.appendChild(micStatus);
-    secondaryWrapper.appendChild(videoWrapper);
+    videoContainer.appendChild(videoWrapper);
   };
 
   const removeVideoElement = (userId) => {
     const wrapper = document.getElementById(`wrapper-${userId}`);
     if (wrapper) {
       wrapper.remove();
-      
-      // Remove secondary wrapper if empty
-      if (videoContainerRef.current) {
-        const secondaryWrapper = videoContainerRef.current.querySelector('.secondary-videos-wrapper');
-        if (secondaryWrapper && secondaryWrapper.children.length === 0) {
-          secondaryWrapper.remove();
-        }
-      }
     }
+    // Clean up stored references
+    peersRef.current.delete(`mic-status-${userId}`);
+    peersRef.current.delete(`name-${userId}`);
   };
 
+  // Function to update mic status indicator
+  const updateMicStatus = useCallback((userId, isMuted) => {
+    const micStatus = peersRef.current.get(`mic-status-${userId}`);
+    if (micStatus) {
+      if (isMuted) {
+        micStatus.className = 'mic-status mic-muted';
+        micStatus.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 11H17.3C17.2 11.3 17.1 11.6 17 12V14C17 15.1 16.1 16 15 16H9C7.9 16 7 15.1 7 14V12C7 11.6 6.9 11.3 6.8 11H5C4.4 11 4 11.4 4 12C4 12.6 4.4 13 5 13H19C19.6 13 20 12.6 20 12C20 11.4 19.6 11 19 11Z" fill="currentColor"/>
+            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+            <path d="M3.7 2.3L2.3 3.7L20.3 21.7L21.7 20.3L3.7 2.3Z" fill="currentColor"/>
+          </svg>
+        `;
+      } else {
+        micStatus.className = 'mic-status mic-unmuted';
+        micStatus.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+          </svg>
+        `;
+      }
+    }
+  }, []);
+
   const updateVideoLayout = () => {
-    // Layout is now handled by CSS with the secondary-videos-wrapper
+    // Layout is now handled by CSS with the participants-row-container
     // No need for class-based layout management
   };
 
@@ -234,6 +259,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
   return {
     createPeer,
     setVideoContainerRef,
+    updateMicStatus,
   };
 }
 
