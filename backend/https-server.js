@@ -1,13 +1,18 @@
-const express = require("express");
-const https = require("https");
-const fs = require("fs");
-const socketIo = require("socket.io");
-const path = require("path");
+import express from "express";
+import https from "https";
+import fs from "fs";
+import { Server } from "socket.io";
+import path from "path";
+import { fileURLToPath } from "url";
+import selfsigned from "selfsigned";
+import os from "os";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
 // Create self-signed certificate (for development only)
-const selfsigned = require("selfsigned");
 const attrs = [{ name: "commonName", value: "localhost" }];
 const pems = selfsigned.generate(attrs, { days: 365 });
 
@@ -19,7 +24,7 @@ const server = https.createServer(
   app
 );
 
-const io = socketIo(server, {
+const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -28,8 +33,15 @@ const io = socketIo(server, {
 
 const PORT = process.env.PORT || 3443;
 
-// Serve static files from frontend directory
-app.use(express.static(path.join(__dirname, "../frontend")));
+// Serve static files from frontend directory (or dist if built)
+const frontendPath = path.join(__dirname, "../dist");
+const fallbackPath = path.join(__dirname, "../frontend");
+
+if (fs.existsSync(frontendPath)) {
+  app.use(express.static(frontendPath));
+} else {
+  app.use(express.static(fallbackPath));
+}
 
 // Store rooms and users
 const rooms = new Map();
@@ -69,15 +81,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("signal", (data) => {
-    // Handle targeted signaling (to specific user) or broadcast to room
     if (data.to) {
-      // Send to specific user
       socket.to(data.to).emit("signal", {
         ...data,
         from: socket.id,
       });
     } else {
-      // Broadcast to all users in the same room (legacy support)
       socket.rooms.forEach((room) => {
         if (room !== socket.id) {
           socket.to(room).emit("signal", {
@@ -121,14 +130,13 @@ server.listen(PORT, "0.0.0.0", () => {
   );
 
   // Try to show the actual network IP
-  const os = require("os");
   const networkInterfaces = os.networkInterfaces();
 
   console.log("\nAvailable on your network:");
   Object.keys(networkInterfaces).forEach((interfaceName) => {
-    networkInterfaces[interfaceName].forEach((interface) => {
-      if (interface.family === "IPv4" && !interface.internal) {
-        console.log(`  https://${interface.address}:${PORT}`);
+    networkInterfaces[interfaceName].forEach((iface) => {
+      if (iface.family === "IPv4" && !iface.internal) {
+        console.log(`  https://${iface.address}:${PORT}`);
       }
     });
   });

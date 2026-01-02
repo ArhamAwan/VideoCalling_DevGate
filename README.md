@@ -13,7 +13,7 @@ A real-time WebRTC-based video calling application that enables peer-to-peer vid
 
 ## Tech Stack
 
-- **Frontend**: Vanilla JavaScript (ES6 modules), HTML5, CSS3
+- **Frontend**: React 18, Vite, HTML5, CSS3
 - **Backend**: Node.js, Express.js
 - **Real-time Communication**: Socket.IO (signaling), WebRTC (media)
 - **STUN Servers**: Google's public STUN servers
@@ -27,16 +27,19 @@ Video Call/
 │   └── https-server.js  # HTTPS server (port 3443)
 ├── frontend/            # Frontend application
 │   ├── index.html       # Main HTML page
+│   ├── main.jsx         # React entry point
+│   ├── App.jsx          # Main React component
 │   ├── styles.css       # Application styles
-│   └── js/              # JavaScript modules
-│       ├── app.js       # Main application logic
-│       ├── socket.js    # Socket.IO client
-│       ├── webrtc.js    # WebRTC peer management
-│       ├── media.js     # Media capture
-│       └── ui.js        # UI controls
+│   ├── components/       # React components
+│   │   └── VideoCall.jsx
+│   └── hooks/           # React hooks
+│       ├── useMediaStream.js
+│       ├── useSocket.js
+│       └── useWebRTC.js
 ├── docs/                # Documentation
 │   └── HOW_IT_WORKS.md  # Detailed technical documentation
 ├── config/              # Configuration files
+├── vite.config.js       # Vite configuration
 ├── package.json         # Dependencies and scripts
 └── README.md           # This file
 ```
@@ -54,6 +57,31 @@ Video Call/
 ```bash
 # Install dependencies
 npm install
+```
+
+### Development Mode
+
+For development with hot-reload (using Vite):
+
+```bash
+# Terminal 1: Start backend server
+npm run dev
+
+# Terminal 2: Start Vite dev server (frontend)
+npx vite --config vite.config.js
+# Or add to package.json: "dev:frontend": "vite --config vite.config.js"
+```
+
+The Vite dev server will run on `http://localhost:5173` and proxy Socket.IO requests to the backend.
+
+### Production Build
+
+```bash
+# Build React app
+npm run build
+
+# Start production server
+npm start
 ```
 
 ### Running the Application
