@@ -18,7 +18,23 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   const hasAutoJoined = useRef(false);
 
   useEffect(() => {
-    if (setVideoContainerRef && videoContainerRef.current) {
+    if (setVideoContainerRef) {
+      // Set the ref immediately and also on mount
+      if (videoContainerRef.current) {
+        setVideoContainerRef(videoContainerRef.current);
+      }
+      // Also set up a callback ref to ensure it's always set
+      const container = document.querySelector('.videos-grid-container');
+      if (container && !videoContainerRef.current) {
+        videoContainerRef.current = container;
+        setVideoContainerRef(container);
+      }
+    }
+  }, [setVideoContainerRef]);
+
+  // Also update ref when container is mounted
+  useEffect(() => {
+    if (videoContainerRef.current && setVideoContainerRef) {
       setVideoContainerRef(videoContainerRef.current);
     }
   }, [setVideoContainerRef]);
@@ -41,10 +57,33 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
 
   useEffect(() => {
     if (stream && localVideoRef.current) {
-      localVideoRef.current.srcObject = stream;
-      localVideoRef.current.play().catch((err) => {
-        console.error("Error playing video:", err);
-      });
+      const video = localVideoRef.current;
+      video.srcObject = stream;
+      
+      // Wait for video to be ready before playing
+      const handleCanPlay = () => {
+        video.play().catch((err) => {
+          // Ignore AbortError - it's common when video is reloaded
+          if (err.name !== 'AbortError') {
+            console.error("Error playing video:", err);
+          }
+        });
+      };
+      
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+      
+      // Also try to play immediately (in case canplay already fired)
+      if (video.readyState >= 2) {
+        video.play().catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.error("Error playing video:", err);
+          }
+        });
+      }
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+      };
     }
   }, [stream]);
 
