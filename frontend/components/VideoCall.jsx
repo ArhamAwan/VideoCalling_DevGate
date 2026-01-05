@@ -264,6 +264,10 @@ function VideoCall({
                     backgroundColor: "#E0E0E0",
                     color: "#666",
                     fontSize: 12,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   +{participants.length - 3}
