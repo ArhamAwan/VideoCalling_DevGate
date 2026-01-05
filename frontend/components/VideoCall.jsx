@@ -52,7 +52,7 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
     if (stream && localVideoRef.current) {
       const video = localVideoRef.current;
       video.srcObject = stream;
-      
+
       // Wait for video to be ready before playing
       const handleCanPlay = () => {
         video.play().catch((err) => {
@@ -62,9 +62,9 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
           }
         });
       };
-      
+
       video.addEventListener('canplay', handleCanPlay, { once: true });
-      
+
       // Also try to play immediately (in case canplay already fired)
       if (video.readyState >= 2) {
         video.play().catch((err) => {
@@ -73,7 +73,7 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
           }
         });
       }
-      
+
       return () => {
         video.removeEventListener('canplay', handleCanPlay);
       };
@@ -141,11 +141,24 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
     socket.on("room-users", handleRoomUsers);
     socket.on("receive-message", handleReceiveMessage);
 
+    const handleMicToggle = ({ userId, isMuted }) => {
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p.id === userId
+            ? { ...p, micEnabled: !isMuted }
+            : p
+        )
+      );
+    };
+
+    socket.on("mic-toggle", handleMicToggle);
+
     return () => {
       socket.off("user-joined", handleUserJoined);
       socket.off("user-left", handleUserLeft);
       socket.off("room-users", handleRoomUsers);
       socket.off("receive-message", handleReceiveMessage);
+      socket.off("mic-toggle", handleMicToggle);
     };
   }, [socket, currentUserId, displayName, micEnabled, cameraEnabled, userName]);
 
@@ -244,7 +257,7 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
               <div className="video-label">{displayName}</div>
               <div className={`mic-status ${micEnabled ? 'mic-unmuted' : 'mic-muted'}`} aria-label={micEnabled ? 'Microphone on' : 'Microphone muted'}>
                 {micEnabled ? <FiMic /> : <FiMicOff />}
-              </div> 
+              </div>
               {/* Remote videos will be added here by useWebRTC */}
             </div>
           </div>

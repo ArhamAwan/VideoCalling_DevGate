@@ -3,7 +3,7 @@ import { useRef, useCallback } from 'react';
 export function useWebRTC(socket, localStream, setIsConnecting) {
   const peersRef = useRef(new Map());
   const videoContainerRef = useRef(null);
-  
+
   // Expose ref setter
   const setVideoContainerRef = useCallback((ref) => {
     videoContainerRef.current = ref;
@@ -32,16 +32,16 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
         trackKind: event.track?.kind,
         trackId: event.track?.id
       });
-      
+
       // Only process video tracks for video elements
       if (event.track && event.track.kind !== 'video') {
         console.log(`Skipping non-video track for ${userId}:`, event.track.kind);
         return;
       }
-      
+
       // Get stored user name if available
       const storedName = peersRef.current.get(`name-${userId}`);
-      
+
       // Use the stream from the event, or create one from the track
       let streamToUse = null;
       if (event.streams && event.streams.length > 0) {
@@ -50,7 +50,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
         // Create a new stream from the video track if no stream is provided
         streamToUse = new MediaStream([event.track]);
       }
-      
+
       if (streamToUse && streamToUse.getVideoTracks().length > 0) {
         console.log(`✅ Video stream ready for ${userId}, calling addVideoElement`, {
           stream: streamToUse,
@@ -58,7 +58,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
           audioTracks: streamToUse.getAudioTracks().length,
           userName: storedName
         });
-        
+
         // Ensure container ref is set
         if (!videoContainerRef.current) {
           const container = document.querySelector('.videos-grid-container');
@@ -67,7 +67,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
             console.log('Found and set video container ref');
           }
         }
-        
+
         // Small delay to ensure container is ready
         setTimeout(() => {
           addVideoElement(userId, streamToUse, storedName);
@@ -125,7 +125,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       userName,
       streamTracks: stream?.getTracks()?.length
     });
-    
+
     if (!videoContainerRef.current) {
       console.error('Video container ref is not set');
       // Try to find the container manually
@@ -143,7 +143,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     removeVideoElement(userId);
 
     const videoContainer = videoContainerRef.current;
-    
+
     // Ensure it's the grid container
     if (!videoContainer.classList.contains('videos-grid-container')) {
       console.error('Video container is not a grid container', {
@@ -153,10 +153,10 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       });
       return;
     }
-    
-    console.log(`Adding video element for ${userId}`, { 
-      userName, 
-      stream, 
+
+    console.log(`Adding video element for ${userId}`, {
+      userName,
+      stream,
       hasTracks: stream.getTracks().length,
       videoTracks: stream.getVideoTracks().length,
       audioTracks: stream.getAudioTracks().length
@@ -165,7 +165,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     const videoWrapper = document.createElement('div');
     videoWrapper.className = 'video-wrapper grid-video';
     videoWrapper.id = `wrapper-${userId}`;
-    
+
     // Ensure wrapper is visible and properly styled
     videoWrapper.style.position = 'relative';
     videoWrapper.style.width = '100%';
@@ -178,14 +178,14 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     video.setAttribute('autoplay', 'true');
     video.setAttribute('playsinline', 'true');
     video.srcObject = stream;
-    
+
     // Explicitly play the video after setting srcObject
     video.addEventListener('loadedmetadata', () => {
       video.play().catch((err) => {
         console.error(`Error playing video for ${userId}:`, err);
       });
     });
-    
+
     // Also try to play immediately
     video.play().catch((err) => {
       console.error(`Error playing video for ${userId} (immediate):`, err);
@@ -200,11 +200,14 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     const micStatus = document.createElement('div');
     micStatus.className = 'mic-status mic-unmuted';
     micStatus.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+        <line x1="12" y1="19" x2="12" y2="23"></line>
+        <line x1="8" y1="23" x2="16" y2="23"></line>
       </svg>
     `;
-    
+
     // Store mic status element for later updates
     peersRef.current.set(`mic-status-${userId}`, micStatus);
 
@@ -215,17 +218,22 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       if (pending) {
         micStatus.className = 'mic-status mic-muted';
         micStatus.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 11H17.3C17.2 11.3 17.1 11.6 17 12V14C17 15.1 16.1 16 15 16H9C7.9 16 7 15.1 7 14V12C7 11.6 6.9 11.3 6.8 11H5C4.4 11 4 11.4 4 12C4 12.6 4.4 13 5 13H19C19.6 13 20 12.6 20 12C20 11.4 19.6 11 19 11Z" fill="currentColor"/>
-            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
-            <path d="M3.7 2.3L2.3 3.7L20.3 21.7L21.7 20.3L3.7 2.3Z" fill="currentColor"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
           </svg>
         `;
       } else {
         micStatus.className = 'mic-status mic-unmuted';
         micStatus.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
           </svg>
         `;
       }
@@ -236,9 +244,9 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     videoWrapper.appendChild(label);
     videoWrapper.appendChild(micStatus);
     videoContainer.appendChild(videoWrapper);
-    
-    console.log(`✅ Added video element for user ${userId}`, { 
-      userName, 
+
+    console.log(`✅ Added video element for user ${userId}`, {
+      userName,
       stream,
       videoElement: video,
       wrapper: videoWrapper,
@@ -246,16 +254,16 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       containerChildren: videoContainer.children.length,
       wrapperInDOM: document.body.contains(videoWrapper)
     });
-    
+
     // Ensure video is visible
     video.style.width = '100%';
     video.style.height = '100%';
     video.style.objectFit = 'cover';
     video.style.display = 'block';
-    
+
     // Force a reflow to ensure the element is rendered
     void videoWrapper.offsetHeight;
-    
+
     // Try playing again after a short delay to ensure everything is set up
     setTimeout(() => {
       if (video.paused || video.readyState < 2) {
@@ -287,17 +295,22 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       if (isMuted) {
         micStatus.className = 'mic-status mic-muted';
         micStatus.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 11H17.3C17.2 11.3 17.1 11.6 17 12V14C17 15.1 16.1 16 15 16H9C7.9 16 7 15.1 7 14V12C7 11.6 6.9 11.3 6.8 11H5C4.4 11 4 11.4 4 12C4 12.6 4.4 13 5 13H19C19.6 13 20 12.6 20 12C20 11.4 19.6 11 19 11Z" fill="currentColor"/>
-            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
-            <path d="M3.7 2.3L2.3 3.7L20.3 21.7L21.7 20.3L3.7 2.3Z" fill="currentColor"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
           </svg>
         `;
       } else {
         micStatus.className = 'mic-status mic-unmuted';
         micStatus.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
           </svg>
         `;
       }
@@ -325,14 +338,14 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       // Handle both old format (string) and new format (object)
       const userId = typeof payload === 'string' ? payload : (payload?.id || payload);
       const userName = typeof payload === 'object' ? payload?.name : null;
-      
+
       console.log(`User joined event received:`, { payload, userId, userName });
-      
+
       // Store user name if provided
       if (userName) {
         peersRef.current.set(`name-${userId}`, userName);
       }
-      
+
       await createPeerConnection(userId, true);
     };
 
@@ -341,7 +354,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       const userIds = Array.isArray(users) && users.length > 0 && typeof users[0] === 'object'
         ? users.map(u => u.id)
         : users;
-      
+
       // Store user names for later use
       if (Array.isArray(users) && users.length > 0 && typeof users[0] === 'object') {
         users.forEach(({ id, name }) => {
@@ -443,7 +456,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
 
   const cleanup = useCallback(() => {
     console.log('Cleaning up WebRTC connections...');
-    
+
     // Close all peer connections
     peersRef.current.forEach((peer, userId) => {
       try {
@@ -453,10 +466,10 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
         console.error(`Error closing peer for ${userId}:`, error);
       }
     });
-    
+
     // Clear all peer connections
     peersRef.current.clear();
-    
+
     // Remove all video elements from the container
     if (videoContainerRef.current) {
       // Remove all remote video wrappers (keep local video)
@@ -474,7 +487,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
         });
       }
     }
-    
+
     console.log('WebRTC cleanup complete');
   }, []);
 
