@@ -208,6 +208,30 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     // Store mic status element for later updates
     peersRef.current.set(`mic-status-${userId}`, micStatus);
 
+    // Apply any pending mic state (in case we received mic-toggle before the video element existed)
+    const pending = peersRef.current.get(`mic-state-pending-${userId}`);
+    if (typeof pending !== 'undefined') {
+      console.debug('Applying pending mic state for', userId, pending);
+      if (pending) {
+        micStatus.className = 'mic-status mic-muted';
+        micStatus.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 11H17.3C17.2 11.3 17.1 11.6 17 12V14C17 15.1 16.1 16 15 16H9C7.9 16 7 15.1 7 14V12C7 11.6 6.9 11.3 6.8 11H5C4.4 11 4 11.4 4 12C4 12.6 4.4 13 5 13H19C19.6 13 20 12.6 20 12C20 11.4 19.6 11 19 11Z" fill="currentColor"/>
+            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+            <path d="M3.7 2.3L2.3 3.7L20.3 21.7L21.7 20.3L3.7 2.3Z" fill="currentColor"/>
+          </svg>
+        `;
+      } else {
+        micStatus.className = 'mic-status mic-unmuted';
+        micStatus.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+          </svg>
+        `;
+      }
+      peersRef.current.delete(`mic-state-pending-${userId}`);
+    }
+
     videoWrapper.appendChild(video);
     videoWrapper.appendChild(label);
     videoWrapper.appendChild(micStatus);
@@ -256,8 +280,10 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
 
   // Function to update mic status indicator
   const updateMicStatus = useCallback((userId, isMuted) => {
+    console.debug('updateMicStatus called for', { userId, isMuted });
     const micStatus = peersRef.current.get(`mic-status-${userId}`);
     if (micStatus) {
+      console.debug('Found micStatus element for user', userId);
       if (isMuted) {
         micStatus.className = 'mic-status mic-muted';
         micStatus.innerHTML = `
@@ -275,6 +301,10 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
           </svg>
         `;
       }
+    } else {
+      // If the mic status element isn't present yet, store pending state so it can be applied
+      console.debug('Mic status element not found for user', userId, '- storing pending state');
+      peersRef.current.set(`mic-state-pending-${userId}`, isMuted);
     }
   }, []);
 
@@ -384,6 +414,20 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     socket.on('user-left', handleUserLeft);
     socket.on('signal', handleSignal);
 
+    // Handle remote mic-toggle events to update mic status indicators
+    const handleMicToggle = (payload) => {
+      try {
+        const { userId, isMuted } = payload || {};
+        if (typeof userId !== 'undefined') {
+          updateMicStatus(userId, isMuted);
+        }
+      } catch (err) {
+        console.error('Error handling mic-toggle payload:', err);
+      }
+    };
+
+    socket.on('mic-toggle', handleMicToggle);
+
     // Return cleanup function
     return () => {
       clearTimeout(connectingTimeout);
@@ -392,6 +436,7 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
         socket.off('room-users', handleRoomUsers);
         socket.off('user-left', handleUserLeft);
         socket.off('signal', handleSignal);
+        socket.off('mic-toggle', handleMicToggle);
       }
     };
   }, [socket, createPeerConnection, setIsConnecting]);

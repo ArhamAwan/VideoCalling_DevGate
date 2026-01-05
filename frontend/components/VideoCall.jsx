@@ -185,6 +185,14 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setMicEnabled(audioTrack.enabled);
+        // Notify other peers about mic toggle so their UI can update
+        if (socket) {
+          socket.emit("mic-toggle", {
+            roomId,
+            userId: currentUserId,
+            isMuted: !audioTrack.enabled,
+          });
+        }
       }
     }
   };

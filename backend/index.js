@@ -196,6 +196,25 @@ io.on("connection", (socket) => {
     });
   });
 
+  // Mic toggle events from clients: broadcast to others in the room so they can update mic indicators
+  socket.on("mic-toggle", (data) => {
+    try {
+      const { roomId, userId, isMuted } = data || {};
+      if (roomId) {
+        socket.to(roomId).emit("mic-toggle", { userId, isMuted });
+      } else {
+        // Fallback: broadcast to all other rooms the socket is in
+        Array.from(socket.rooms).forEach((room) => {
+          if (room !== socket.id) {
+            socket.to(room).emit("mic-toggle", { userId, isMuted });
+          }
+        });
+      }
+    } catch (error) {
+      console.error(`Error handling mic-toggle from ${socket.id}:`, error);
+    }
+  });
+
   socket.on("disconnect", () => {
     try {
       console.log("User disconnected:", socket.id);
