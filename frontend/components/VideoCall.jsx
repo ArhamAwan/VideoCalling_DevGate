@@ -18,7 +18,23 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   const hasAutoJoined = useRef(false);
 
   useEffect(() => {
-    if (setVideoContainerRef && videoContainerRef.current) {
+    if (setVideoContainerRef) {
+      // Set the ref immediately and also on mount
+      if (videoContainerRef.current) {
+        setVideoContainerRef(videoContainerRef.current);
+      }
+      // Also set up a callback ref to ensure it's always set
+      const container = document.querySelector('.videos-grid-container');
+      if (container && !videoContainerRef.current) {
+        videoContainerRef.current = container;
+        setVideoContainerRef(container);
+      }
+    }
+  }, [setVideoContainerRef]);
+
+  // Also update ref when container is mounted
+  useEffect(() => {
+    if (videoContainerRef.current && setVideoContainerRef) {
       setVideoContainerRef(videoContainerRef.current);
     }
   }, [setVideoContainerRef]);
@@ -41,10 +57,33 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
 
   useEffect(() => {
     if (stream && localVideoRef.current) {
-      localVideoRef.current.srcObject = stream;
-      localVideoRef.current.play().catch((err) => {
-        console.error("Error playing video:", err);
-      });
+      const video = localVideoRef.current;
+      video.srcObject = stream;
+      
+      // Wait for video to be ready before playing
+      const handleCanPlay = () => {
+        video.play().catch((err) => {
+          // Ignore AbortError - it's common when video is reloaded
+          if (err.name !== 'AbortError') {
+            console.error("Error playing video:", err);
+          }
+        });
+      };
+      
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+      
+      // Also try to play immediately (in case canplay already fired)
+      if (video.readyState >= 2) {
+        video.play().catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.error("Error playing video:", err);
+          }
+        });
+      }
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+      };
     }
   }, [stream]);
 
@@ -125,16 +164,22 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
       setParticipants((prev) => prev.filter((p) => p.id !== userId));
     };
 
+    const handleReceiveMessage = (message) => {
+      setMessages((prev) => [...prev, message]);
+    };
+
     socket.on("user-joined", handleUserJoined);
     socket.on("user-left", handleUserLeft);
     socket.on("room-users", handleRoomUsers);
+    socket.on("receive-message", handleReceiveMessage);
 
     return () => {
       socket.off("user-joined", handleUserJoined);
       socket.off("user-left", handleUserLeft);
       socket.off("room-users", handleRoomUsers);
+      socket.off("receive-message", handleReceiveMessage);
     };
-  }, [socket, currentUserId, displayName, micEnabled, cameraEnabled]);
+  }, [socket, currentUserId, displayName, micEnabled, cameraEnabled, userName]);
 
   useEffect(() => {
     if (isInCall) {
@@ -190,15 +235,29 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   };
 
   const handleSendMessage = (text) => {
+    const time = new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
     const newMessage = {
       author: displayName,
       text: text,
-      time: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      time: time,
     };
+
+    // Update local state
     setMessages((prev) => [...prev, newMessage]);
+
+    // Send to server
+    if (socket && roomId) {
+      socket.emit("send-message", {
+        roomId,
+        message: text,
+        time,
+        author: displayName
+      });
+    }
   };
 
   const handleOptions = () => {
@@ -227,7 +286,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
               {micEnabled && (
                 <div className="mic-status mic-unmuted">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
+                    <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor" />
                   </svg>
                 </div>
               )}

@@ -53,138 +53,177 @@ io.on("connection", (socket) => {
 
   // Check if room exists
   socket.on("check-room-exists", (roomId, callback) => {
-    const exists = rooms.has(roomId);
-    if (typeof callback === "function") {
-      callback({ exists });
-    } else {
-      socket.emit("room-exists-response", { roomId, exists });
+    try {
+      const exists = rooms.has(roomId);
+      if (typeof callback === "function") {
+        callback({ exists });
+      } else {
+        socket.emit("room-exists-response", { roomId, exists });
+      }
+    } catch (error) {
+      console.error(`Error in check-room-exists handler for ${socket.id}:`, error);
+      if (typeof callback === "function") {
+        callback({ exists: false });
+      }
     }
   });
 
   socket.on("join-room", (data) => {
-    // Support both old format (string) and new format (object)
-    const roomId = typeof data === "string" ? data : data.roomId;
-    const userName = typeof data === "string" ? null : data.userName;
+    try {
+      // Support both old format (string) and new format (object)
+      const roomId = typeof data === "string" ? data : data?.roomId;
+      const userName = typeof data === "string" ? null : data?.userName;
 
-    console.log(`User ${socket.id} joining room: ${roomId}${userName ? ` as ${userName}` : ""}`);
-
-    // Validate room exists (for joining, not creating)
-    if (!rooms.has(roomId)) {
-      socket.emit("room-not-found", { roomId });
-      return;
-    }
-
-    // Store user name
-    if (userName) {
-      userNames.set(socket.id, userName);
-    }
-
-    // Leave any previous rooms
-    socket.rooms.forEach((room) => {
-      if (room !== socket.id) {
-        socket.leave(room);
+      if (!roomId) {
+        console.error(`Invalid join-room data from ${socket.id}:`, data);
+        socket.emit("error", { message: "Invalid room ID" });
+        return;
       }
-    });
 
-    // Join the new room
-    socket.join(roomId);
+      console.log(`User ${socket.id} joining room: ${roomId}${userName ? ` as ${userName}` : ""}`);
 
-    const room = rooms.get(roomId);
-    room.add(socket.id);
+      // Validate room exists (for joining, not creating)
+      if (!rooms.has(roomId)) {
+        socket.emit("room-not-found", { roomId });
+        return;
+      }
 
-    // Notify others in the room
-    socket.to(roomId).emit("user-joined", socket.id);
+      // Store user name
+      if (userName) {
+        userNames.set(socket.id, userName);
+      }
 
-    // Send current room users with names to the new user
-    const otherUsers = Array.from(room)
-      .filter((id) => id !== socket.id)
-      .map((id) => ({
-        id,
-        name: userNames.get(id) || `User ${id.substring(0, 8)}`,
-      }));
-    socket.emit("room-users", otherUsers);
+      // Leave any previous rooms
+      Array.from(socket.rooms).forEach((room) => {
+        if (room !== socket.id) {
+          socket.leave(room);
+        }
+      });
 
-    console.log(`Room ${roomId} now has ${room.size} users`);
+      // Join the new room
+      socket.join(roomId);
+
+      const room = rooms.get(roomId);
+      if (room) {
+        room.add(socket.id);
+
+        // Notify others in the room
+        socket.to(roomId).emit("user-joined", { id: socket.id, name: userName || userNames.get(socket.id) });
+
+        // Send current room users with names to the new user
+        const otherUsers = Array.from(room)
+          .filter((id) => id !== socket.id)
+          .map((id) => ({
+            id,
+            name: userNames.get(id) || `User ${id.substring(0, 8)}`,
+          }));
+        socket.emit("room-users", otherUsers);
+
+        console.log(`Room ${roomId} now has ${room.size} users`);
+      }
+    } catch (error) {
+      console.error(`Error in join-room handler for ${socket.id}:`, error);
+      socket.emit("error", { message: "Failed to join room" });
+    }
   });
 
   // Create room (called when user creates a new call)
   socket.on("create-room", (data) => {
-    const roomId = data.roomId;
-    const userName = data.userName;
+    try {
+      const roomId = data?.roomId;
+      const userName = data?.userName;
 
-    console.log(`User ${socket.id} creating room: ${roomId} as ${userName}`);
-
-    // Store user name
-    if (userName) {
-      userNames.set(socket.id, userName);
-    }
-
-    // Leave any previous rooms
-    socket.rooms.forEach((room) => {
-      if (room !== socket.id) {
-        socket.leave(room);
+      if (!roomId) {
+        console.error(`Invalid create-room data from ${socket.id}:`, data);
+        socket.emit("error", { message: "Invalid room ID" });
+        return;
       }
-    });
 
-    // Create and join the new room
-    if (!rooms.has(roomId)) {
-      rooms.set(roomId, new Set());
+      console.log(`User ${socket.id} creating room: ${roomId} as ${userName}`);
+
+      // Store user name
+      if (userName) {
+        userNames.set(socket.id, userName);
+      }
+
+      // Leave any previous rooms
+      Array.from(socket.rooms).forEach((room) => {
+        if (room !== socket.id) {
+          socket.leave(room);
+        }
+      });
+
+      // Create and join the new room
+      if (!rooms.has(roomId)) {
+        rooms.set(roomId, new Set());
+      }
+
+      const room = rooms.get(roomId);
+      room.add(socket.id);
+      socket.join(roomId);
+
+      // Send room-users event (empty array since they're alone)
+      socket.emit("room-users", []);
+
+      // Send confirmation
+      socket.emit("room-created", { roomId });
+
+      console.log(`Room ${roomId} created with ${room.size} users`);
+    } catch (error) {
+      console.error(`Error in create-room handler for ${socket.id}:`, error);
+      socket.emit("error", { message: "Failed to create room" });
     }
-
-    const room = rooms.get(roomId);
-    room.add(socket.id);
-    socket.join(roomId);
-
-    // Send room-users event (empty array since they're alone)
-    socket.emit("room-users", []);
-
-    // Send confirmation
-    socket.emit("room-created", { roomId });
-
-    console.log(`Room ${roomId} created with ${room.size} users`);
   });
 
   socket.on("signal", (data) => {
-    if (data.to) {
-      socket.to(data.to).emit("signal", {
-        ...data,
-        from: socket.id,
-      });
-    } else {
-      socket.rooms.forEach((room) => {
-        if (room !== socket.id) {
-          socket.to(room).emit("signal", {
-            ...data,
-            from: socket.id,
-          });
-        }
-      });
+    try {
+      if (data?.to) {
+        socket.to(data.to).emit("signal", {
+          ...data,
+          from: socket.id,
+        });
+      } else {
+        Array.from(socket.rooms).forEach((room) => {
+          if (room !== socket.id) {
+            socket.to(room).emit("signal", {
+              ...data,
+              from: socket.id,
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error(`Error in signal handler for ${socket.id}:`, error);
     }
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    try {
+      console.log("User disconnected:", socket.id);
 
-    // Remove user name
-    userNames.delete(socket.id);
+      // Remove user name
+      userNames.delete(socket.id);
 
-    // Remove user from all rooms
-    rooms.forEach((users, roomId) => {
-      if (users.has(socket.id)) {
-        users.delete(socket.id);
+      // Remove user from all rooms
+      rooms.forEach((users, roomId) => {
+        if (users.has(socket.id)) {
+          users.delete(socket.id);
 
-        // Notify others in the room
-        socket.to(roomId).emit("user-left", socket.id);
+          // Notify others in the room
+          socket.to(roomId).emit("user-left", socket.id);
 
-        // Clean up empty rooms
-        if (users.size === 0) {
-          rooms.delete(roomId);
-          console.log(`Room ${roomId} deleted (empty)`);
-        } else {
-          console.log(`Room ${roomId} now has ${users.size} users`);
+          // Clean up empty rooms
+          if (users.size === 0) {
+            rooms.delete(roomId);
+            console.log(`Room ${roomId} deleted (empty)`);
+          } else {
+            console.log(`Room ${roomId} now has ${users.size} users`);
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error(`Error in disconnect handler for ${socket.id}:`, error);
+    }
   });
 });
 

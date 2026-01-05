@@ -33,7 +33,7 @@ function ChatPanel({ messages, onSendMessage }) {
       </div>
       {isExpanded && (
         <div className="panel-content chat-content">
-          <div class="chat-messages">
+          <div className="chat-messages">
             {messages.map((msg, index) => (
               <div key={index} className="chat-message">
                 <div className="message-header">
