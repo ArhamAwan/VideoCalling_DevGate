@@ -1,5 +1,14 @@
 import React from "react";
-import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiMessageSquare, FiMoreHorizontal, FiPhone, FiPhoneOff } from "react-icons/fi";
+import {
+  FiMic,
+  FiMicOff,
+  FiVideo,
+  FiVideoOff,
+  FiMessageSquare,
+  FiMoreHorizontal,
+  FiPhone,
+  FiPhoneOff,
+} from "react-icons/fi";
 
 function ControlBar({
   micEnabled,
@@ -10,8 +19,7 @@ function ControlBar({
   onToggleChat,
   onOptions,
   onEndCall,
-  isInCall,
-  onJoinRoom,
+  isInCall = true,
 }) {
   return (
     <div className="control-bar">
@@ -35,21 +43,25 @@ function ControlBar({
       >
         {cameraEnabled ? <FiVideo /> : <FiVideoOff />}
       </button>
-      <button type="button" className="control-btn" onClick={onOptions} title="More options" aria-label="More options">
+      <button
+        type="button"
+        className="control-btn"
+        onClick={onOptions}
+        title="More options"
+        aria-label="More options"
+      >
         <FiMoreHorizontal />
       </button>
-      {!isInCall ? (
-        <button type="button" className="join-btn" onClick={onJoinRoom}>
-          <FiPhone /> Join Room
-        </button>
-      ) : (
-        <button type="button" className="end-call-btn" onClick={onEndCall} aria-label="End call">
-          <FiPhoneOff /> End Call
-        </button>
-      )}
+      <button
+        type="button"
+        className="end-call-btn"
+        onClick={onEndCall}
+        aria-label="End call"
+      >
+        <FiPhoneOff /> End Call
+      </button>
     </div>
   );
 }
 
 export default ControlBar;
-

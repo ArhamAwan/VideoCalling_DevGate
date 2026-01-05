@@ -257,6 +257,7 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
         onToggleChat={() => setShowChat(!showChat)}
         onOptions={handleOptions}
         onEndCall={handleEndCall}
+        isInCall={true}
       />
 
       {isConnecting && (
