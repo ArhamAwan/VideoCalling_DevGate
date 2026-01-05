@@ -1,8 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiMic, FiMicOff, FiVideo, FiVideoOff } from "react-icons/fi";
 
 function ParticipantsPanel({ participants }) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [userManuallyToggled, setUserManuallyToggled] = useState(false);
+
+  // Auto-collapse when there are multiple participants (2+)
+  useEffect(() => {
+    if (!userManuallyToggled && participants.length > 1) {
+      setIsExpanded(false);
+    } else if (!userManuallyToggled && participants.length === 1) {
+      setIsExpanded(true);
+    }
+  }, [participants.length, userManuallyToggled]);
+
+  const handleToggle = () => {
+    setUserManuallyToggled(true);
+    setIsExpanded(!isExpanded);
+  };
 
   const getInitials = (name) => {
     return name
@@ -15,7 +30,7 @@ function ParticipantsPanel({ participants }) {
 
   return (
     <div className="participants-panel">
-      <div className="panel-header" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="panel-header" onClick={handleToggle}>
         <h3>Participants</h3>
         <span className={`caret ${isExpanded ? "up" : "down"}`}>▼</span>
       </div>
