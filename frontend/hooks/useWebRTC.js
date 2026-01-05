@@ -26,10 +26,59 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
 
     // Handle incoming stream
     peer.ontrack = (event) => {
+      console.log(`Received track from ${userId}`, event, {
+        streams: event.streams?.length,
+        track: event.track,
+        trackKind: event.track?.kind,
+        trackId: event.track?.id
+      });
+      
+      // Only process video tracks for video elements
+      if (event.track && event.track.kind !== 'video') {
+        console.log(`Skipping non-video track for ${userId}:`, event.track.kind);
+        return;
+      }
+      
       // Get stored user name if available
       const storedName = peersRef.current.get(`name-${userId}`);
-      addVideoElement(userId, event.streams[0], storedName);
-      updateVideoLayout();
+      
+      // Use the stream from the event, or create one from the track
+      let streamToUse = null;
+      if (event.streams && event.streams.length > 0) {
+        streamToUse = event.streams[0];
+      } else if (event.track && event.track.kind === 'video') {
+        // Create a new stream from the video track if no stream is provided
+        streamToUse = new MediaStream([event.track]);
+      }
+      
+      if (streamToUse && streamToUse.getVideoTracks().length > 0) {
+        console.log(`✅ Video stream ready for ${userId}, calling addVideoElement`, {
+          stream: streamToUse,
+          videoTracks: streamToUse.getVideoTracks().length,
+          audioTracks: streamToUse.getAudioTracks().length,
+          userName: storedName
+        });
+        
+        // Ensure container ref is set
+        if (!videoContainerRef.current) {
+          const container = document.querySelector('.videos-grid-container');
+          if (container) {
+            videoContainerRef.current = container;
+            console.log('Found and set video container ref');
+          }
+        }
+        
+        // Small delay to ensure container is ready
+        setTimeout(() => {
+          addVideoElement(userId, streamToUse, storedName);
+          updateVideoLayout();
+        }, 100);
+      } else {
+        console.warn(`❌ No video stream available for ${userId}`, {
+          hasStream: !!streamToUse,
+          videoTracks: streamToUse?.getVideoTracks()?.length || 0
+        });
+      }
 
       // Dismiss connecting overlay when we receive any track
       setIsConnecting(false);
@@ -69,7 +118,26 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
   }, [localStream, socket, setIsConnecting]);
 
   const addVideoElement = (userId, stream, userName = null) => {
-    if (!videoContainerRef.current) return;
+    console.log(`addVideoElement called for ${userId}`, {
+      hasRef: !!videoContainerRef.current,
+      refValue: videoContainerRef.current,
+      stream,
+      userName,
+      streamTracks: stream?.getTracks()?.length
+    });
+    
+    if (!videoContainerRef.current) {
+      console.error('Video container ref is not set');
+      // Try to find the container manually
+      const container = document.querySelector('.videos-grid-container');
+      if (container) {
+        console.log('Found container manually, updating ref');
+        videoContainerRef.current = container;
+      } else {
+        console.error('Could not find videos-grid-container in DOM');
+        return;
+      }
+    }
 
     // Remove existing video if it exists
     removeVideoElement(userId);
@@ -78,19 +146,50 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     
     // Ensure it's the grid container
     if (!videoContainer.classList.contains('videos-grid-container')) {
-      console.error('Video container is not a grid container');
+      console.error('Video container is not a grid container', {
+        element: videoContainer,
+        classes: videoContainer.className,
+        tagName: videoContainer.tagName
+      });
       return;
     }
+    
+    console.log(`Adding video element for ${userId}`, { 
+      userName, 
+      stream, 
+      hasTracks: stream.getTracks().length,
+      videoTracks: stream.getVideoTracks().length,
+      audioTracks: stream.getAudioTracks().length
+    });
 
     const videoWrapper = document.createElement('div');
     videoWrapper.className = 'video-wrapper grid-video';
     videoWrapper.id = `wrapper-${userId}`;
+    
+    // Ensure wrapper is visible and properly styled
+    videoWrapper.style.position = 'relative';
+    videoWrapper.style.width = '100%';
+    videoWrapper.style.height = '100%';
+    videoWrapper.style.minHeight = '200px';
+    videoWrapper.style.display = 'block';
 
     const video = document.createElement('video');
     video.id = `video-${userId}`;
-    video.autoplay = true;
-    video.playsinline = true;
+    video.setAttribute('autoplay', 'true');
+    video.setAttribute('playsinline', 'true');
     video.srcObject = stream;
+    
+    // Explicitly play the video after setting srcObject
+    video.addEventListener('loadedmetadata', () => {
+      video.play().catch((err) => {
+        console.error(`Error playing video for ${userId}:`, err);
+      });
+    });
+    
+    // Also try to play immediately
+    video.play().catch((err) => {
+      console.error(`Error playing video for ${userId} (immediate):`, err);
+    });
 
     const label = document.createElement('div');
     label.className = 'video-label';
@@ -113,6 +212,36 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     videoWrapper.appendChild(label);
     videoWrapper.appendChild(micStatus);
     videoContainer.appendChild(videoWrapper);
+    
+    console.log(`✅ Added video element for user ${userId}`, { 
+      userName, 
+      stream,
+      videoElement: video,
+      wrapper: videoWrapper,
+      container: videoContainer,
+      containerChildren: videoContainer.children.length,
+      wrapperInDOM: document.body.contains(videoWrapper)
+    });
+    
+    // Ensure video is visible
+    video.style.width = '100%';
+    video.style.height = '100%';
+    video.style.objectFit = 'cover';
+    video.style.display = 'block';
+    
+    // Force a reflow to ensure the element is rendered
+    void videoWrapper.offsetHeight;
+    
+    // Try playing again after a short delay to ensure everything is set up
+    setTimeout(() => {
+      if (video.paused || video.readyState < 2) {
+        video.play().catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.error(`Error playing video for ${userId} (delayed):`, err);
+          }
+        });
+      }
+    }, 200);
   };
 
   const removeVideoElement = (userId) => {
@@ -162,7 +291,18 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
       setIsConnecting(false);
     }, 5000); // 5 second timeout
 
-    const handleUserJoined = async (userId) => {
+    const handleUserJoined = async (payload) => {
+      // Handle both old format (string) and new format (object)
+      const userId = typeof payload === 'string' ? payload : (payload?.id || payload);
+      const userName = typeof payload === 'object' ? payload?.name : null;
+      
+      console.log(`User joined event received:`, { payload, userId, userName });
+      
+      // Store user name if provided
+      if (userName) {
+        peersRef.current.set(`name-${userId}`, userName);
+      }
+      
       await createPeerConnection(userId, true);
     };
 
