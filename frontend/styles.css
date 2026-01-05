@@ -147,23 +147,62 @@ body {
 .videos-grid-container {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  /* Default grid for 3+ participants - uses auto-fit for responsive columns */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-content: center;
+  justify-content: center;
   overflow: auto;
-  align-content: start;
-  padding: 4px;
+  transition: all 0.3s ease;
 }
+
+/* 1 Participant - Full Screen Centered */
+.videos-grid-container[data-participant-count="1"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.videos-grid-container[data-participant-count="1"] .video-wrapper {
+  width: 100%;
+  height: 100%;
+  max-width: 1280px;
+  aspect-ratio: 16/9;
+  max-height: calc(100vh - 180px);
+  /* Account for header/controls */
+}
+
+/* 2 Participants - Split Screen */
+.videos-grid-container[data-participant-count="2"] {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  align-content: center;
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.videos-grid-container[data-participant-count="2"] .video-wrapper {
+  height: auto;
+  aspect-ratio: 16/9;
+  width: 100%;
+}
+
 
 /* Ensure minimum 3 columns for better grid layout */
-@media (min-width: 1200px) {
+/* Responsive adjustments for 3+ grid */
+@media (max-width: 768px) {
   .videos-grid-container {
-    grid-template-columns: repeat(3, 1fr);
+    padding: 10px;
   }
-}
 
-@media (min-width: 1600px) {
-  .videos-grid-container {
-    grid-template-columns: repeat(4, 1fr);
+  .videos-grid-container[data-participant-count="2"] {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
   }
 }
 
@@ -768,6 +807,7 @@ video {
     transform: scale(1.1);
   }
 }
+
 .connecting-overlay {
   position: fixed;
   top: 0;
