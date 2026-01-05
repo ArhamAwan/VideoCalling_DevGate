@@ -832,9 +832,11 @@ html {
     left: 0;
     right: 0;
     z-index: 1000;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border); /* Changed from #eee */
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: var(
+      --bg-surface
+    ); /* Changed from rgba(255, 255, 255, 0.95) */
     backdrop-filter: blur(10px);
   }
 
