@@ -30,7 +30,12 @@ function Header({ roomId }) {
         <div className="header-right">
           <div className="room-id-header">
             <span className="room-id-label">Room ID:</span>
-            <span className="room-id-value">{roomId}</span>
+            <input
+              type="text"
+              value={roomId}
+              readOnly
+              className="room-id-value"
+            />
             <button
               onClick={copyRoomId}
               className="copy-room-id-btn"

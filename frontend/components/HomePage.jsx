@@ -99,13 +99,15 @@ function HomePage({ onCreateCall, onJoinCall, error }) {
           <div className="form-actions">
             {!roomCreated ? (
               <>
-                <button
-                  onClick={handleCreateCall}
-                  className="btn btn-primary"
-                  disabled={!userName.trim()}
-                >
-                  Create Call
-                </button>
+                {!showJoinInput && (
+                  <button
+                    onClick={handleCreateCall}
+                    className="btn btn-primary"
+                    disabled={!userName.trim()}
+                  >
+                    Create Call
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setShowJoinInput(!showJoinInput);
