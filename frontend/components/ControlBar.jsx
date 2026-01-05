@@ -9,8 +9,6 @@ function ControlBar({
   onToggleChat,
   onOptions,
   onEndCall,
-  isInCall,
-  onJoinRoom,
 }) {
   return (
     <div className="control-bar">
@@ -38,15 +36,9 @@ function ControlBar({
       <button className="control-btn" onClick={onOptions} title="More options">
         ⋯
       </button>
-      {!isInCall ? (
-        <button className="join-btn" onClick={onJoinRoom}>
-          Join Room
-        </button>
-      ) : (
-        <button className="end-call-btn" onClick={onEndCall}>
-          End Call
-        </button>
-      )}
+      <button className="end-call-btn" onClick={onEndCall}>
+        End Call
+      </button>
     </div>
   );
 }
