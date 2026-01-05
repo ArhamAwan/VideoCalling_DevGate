@@ -14,7 +14,7 @@ function App() {
   const [error, setError] = useState("");
   const [showCallEnded, setShowCallEnded] = useState(false);
   const [callEndedMessage, setCallEndedMessage] = useState("");
-  const { socket, joinRoom, createRoom, checkRoomExists, endCall } =
+  const { socket, joinRoom, createRoom, checkRoomExists, leaveRoom, endCall } =
     useSocket();
   const { startMedia } = useMediaStream();
   const {
@@ -127,7 +127,8 @@ function App() {
         });
       }
 
-      // Wait 2 seconds before returning to home (to show the modal)
+      // Wait 2 seconds before returning to home (to show the modal if needed)
+      const delay = showMessage ? 2000 : 0;
       setTimeout(() => {
         // 4. Reset state to go back to home page
         setIsInCall(false);
@@ -148,7 +149,7 @@ function App() {
           });
 
         console.log("Call cleanup complete");
-      }, 2000);
+      }, delay);
     },
     [cleanupWebRTC, stream, startMedia]
   );
@@ -188,15 +189,15 @@ function App() {
   }, [socket, performCallCleanup]);
 
   const handleEndCall = () => {
-    console.log("Ending call...");
+    console.log("Leaving call...");
 
-    // Notify server and all other participants that the call is ending
+    // Notify server that this user is leaving (not ending the call for everyone)
     if (roomId) {
-      endCall(roomId);
+      leaveRoom(roomId);
     }
 
-    // Perform cleanup with message
-    performCallCleanup(true, "Call ended");
+    // Perform cleanup without showing "call ended" message since we're just leaving
+    performCallCleanup(false, "");
   };
 
   // Cleanup on unmount

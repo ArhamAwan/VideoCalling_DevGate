@@ -77,6 +77,14 @@ export function useSocket() {
     }
   };
 
+  const leaveRoom = (roomId) => {
+    if (socketRef.current && roomId) {
+      // Emit leave-room event to notify server that this user is leaving
+      // The server will handle removing the user and notifying others
+      socketRef.current.emit('leave-room', roomId);
+    }
+  };
+
   const endCall = (roomId) => {
     if (socketRef.current && roomId) {
       // Emit end-call event to notify server and all participants
@@ -90,6 +98,7 @@ export function useSocket() {
     joinRoom,
     createRoom,
     checkRoomExists,
+    leaveRoom,
     endCall,
   };
 }
