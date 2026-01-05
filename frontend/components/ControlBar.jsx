@@ -43,7 +43,6 @@ function ControlBar({
       >
         {cameraEnabled ? <FiVideo /> : <FiVideoOff />}
       </button>
-<<<<<<< HEAD
       <button type="button" className="control-btn" onClick={onOptions} title="More options" aria-label="More options">
         <FiMoreHorizontal />
       </button>
@@ -56,17 +55,6 @@ function ControlBar({
           <FiPhoneOff /> End Call
         </button>
       )}
-=======
-
-      <button
-        type="button"
-        className="end-call-btn"
-        onClick={onEndCall}
-        aria-label="End call"
-      >
-        <FiPhoneOff /> End Call
-      </button>
->>>>>>> b63275c7e9e4aa3fa251df6e6b071c541227b453
     </div>
   );
 }
