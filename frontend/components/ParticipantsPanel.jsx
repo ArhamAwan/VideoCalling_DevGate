@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { FiMic, FiMicOff, FiVideo, FiVideoOff } from "react-icons/fi";
 
 function ParticipantsPanel({ participants }) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -30,14 +31,14 @@ function ParticipantsPanel({ participants }) {
               </div>
               <div className="participant-status">
                 {participant.micEnabled ? (
-                  <span className="status-icon mic-on" title="Microphone on">🎤</span>
+                  <span className="status-icon mic-on" title="Microphone on" aria-label="Microphone on"><FiMic /></span>
                 ) : (
-                  <span className="status-icon mic-off" title="Microphone off">🔇</span>
+                  <span className="status-icon mic-off" title="Microphone off" aria-label="Microphone off"><FiMicOff /></span>
                 )}
                 {participant.cameraEnabled ? (
-                  <span className="status-icon camera-on" title="Camera on">📹</span>
+                  <span className="status-icon camera-on" title="Camera on" aria-label="Camera on"><FiVideo /></span>
                 ) : (
-                  <span className="status-icon camera-off" title="Camera off">📷</span>
+                  <span className="status-icon camera-off" title="Camera off" aria-label="Camera off"><FiVideoOff /></span>
                 )}
               </div>
             </div>

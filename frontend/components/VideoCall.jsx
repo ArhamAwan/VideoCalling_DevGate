@@ -3,6 +3,7 @@ import Header from "./Header";
 import ParticipantsPanel from "./ParticipantsPanel";
 import ChatPanel from "./ChatPanel";
 import ControlBar from "./ControlBar";
+import { FiMic, FiMicOff } from "react-icons/fi";
 
 function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userName, roomId, onEndCall }) {
   const localVideoRef = useRef(null);
@@ -79,32 +80,7 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
     }
   }, [stream]);
 
-  // Update local video mic status indicator
-  useEffect(() => {
-    const localVideoWrapper = document.getElementById('wrapper-local');
-    if (localVideoWrapper) {
-      const micStatus = localVideoWrapper.querySelector('.mic-status');
-      if (micStatus) {
-        if (micEnabled) {
-          micStatus.className = 'mic-status mic-unmuted';
-          micStatus.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
-            </svg>
-          `;
-        } else {
-          micStatus.className = 'mic-status mic-muted';
-          micStatus.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M19 11H17.3C17.2 11.3 17.1 11.6 17 12V14C17 15.1 16.1 16 15 16H9C7.9 16 7 15.1 7 14V12C7 11.6 6.9 11.3 6.8 11H5C4.4 11 4 11.4 4 12C4 12.6 4.4 13 5 13H19C19.6 13 20 12.6 20 12C20 11.4 19.6 11 19 11Z" fill="currentColor"/>
-              <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor"/>
-              <path d="M3.7 2.3L2.3 3.7L20.3 21.7L21.7 20.3L3.7 2.3Z" fill="currentColor"/>
-            </svg>
-          `;
-        }
-      }
-    }
-  }, [micEnabled]);
+
 
   useEffect(() => {
     if (!socket) return;
@@ -258,13 +234,9 @@ function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userNam
                 className="local-video"
               />
               <div className="video-label">{displayName}</div>
-              {micEnabled && (
-                <div className="mic-status mic-unmuted">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 14C13.1 14 14 13.1 14 12V6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6V12C10 13.1 10.9 14 12 14Z" fill="currentColor" />
-                  </svg>
-                </div>
-              )}
+              <div className={`mic-status ${micEnabled ? 'mic-unmuted' : 'mic-muted'}`} aria-label={micEnabled ? 'Microphone on' : 'Microphone muted'}>
+                {micEnabled ? <FiMic /> : <FiMicOff />}
+              </div> 
               {/* Remote videos will be added here by useWebRTC */}
             </div>
           </div>
