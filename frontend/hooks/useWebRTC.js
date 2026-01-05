@@ -7,6 +7,10 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
   // Expose ref setter
   const setVideoContainerRef = useCallback((ref) => {
     videoContainerRef.current = ref;
+    // Initial layout update for local video
+    if (ref) {
+      setTimeout(() => updateVideoLayout(), 0);
+    }
   }, []);
 
   const createPeerConnection = useCallback(async (userId, shouldCreateOffer) => {
@@ -322,8 +326,14 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
   }, []);
 
   const updateVideoLayout = () => {
-    // Layout is now handled by CSS with the participants-row-container
-    // No need for class-based layout management
+    const container = videoContainerRef.current;
+    if (!container) return;
+
+    // Count all video wrappers including local one
+    const videoCount = container.querySelectorAll('.video-wrapper').length;
+    container.setAttribute('data-participant-count', videoCount);
+
+    console.log(`Updated video layout: ${videoCount} participants`);
   };
 
   const createPeer = useCallback((stream) => {
