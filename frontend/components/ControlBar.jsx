@@ -35,16 +35,6 @@ function ControlBar({
       >
         {cameraEnabled ? <FiVideo /> : <FiVideoOff />}
       </button>
-      <button
-        type="button"
-        className={`control-btn ${showChat ? "active" : ""}`}
-        onClick={onToggleChat}
-        title="Toggle chat"
-        aria-label="Toggle chat"
-        aria-pressed={showChat ? "true" : "false"}
-      >
-        <FiMessageSquare />
-      </button>
       <button type="button" className="control-btn" onClick={onOptions} title="More options" aria-label="More options">
         <FiMoreHorizontal />
       </button>
