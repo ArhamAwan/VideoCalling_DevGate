@@ -1,5 +1,14 @@
 import React from "react";
-import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiMessageSquare, FiMoreHorizontal, FiPhone, FiPhoneOff } from "react-icons/fi";
+import {
+  FiMic,
+  FiMicOff,
+  FiVideo,
+  FiVideoOff,
+  FiMessageSquare,
+  FiMoreHorizontal,
+  FiPhone,
+  FiPhoneOff,
+} from "react-icons/fi";
 
 function ControlBar({
   micEnabled,
@@ -10,8 +19,7 @@ function ControlBar({
   onToggleChat,
   onOptions,
   onEndCall,
-  isInCall,
-  onJoinRoom,
+  isInCall = true,
 }) {
   return (
     <div className="control-bar">
@@ -52,4 +60,3 @@ function ControlBar({
 }
 
 export default ControlBar;
-

@@ -77,11 +77,20 @@ export function useSocket() {
     }
   };
 
+  const endCall = (roomId) => {
+    if (socketRef.current && roomId) {
+      // Emit end-call event to notify server and all participants
+      // The server will handle leaving the room and notifying others
+      socketRef.current.emit('end-call', roomId);
+    }
+  };
+
   return {
     socket,
     joinRoom,
     createRoom,
     checkRoomExists,
+    endCall,
   };
 }
 

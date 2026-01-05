@@ -441,10 +441,48 @@ export function useWebRTC(socket, localStream, setIsConnecting) {
     };
   }, [socket, createPeerConnection, setIsConnecting]);
 
+  const cleanup = useCallback(() => {
+    console.log('Cleaning up WebRTC connections...');
+    
+    // Close all peer connections
+    peersRef.current.forEach((peer, userId) => {
+      try {
+        peer.close();
+        console.log(`Closed peer connection for ${userId}`);
+      } catch (error) {
+        console.error(`Error closing peer for ${userId}:`, error);
+      }
+    });
+    
+    // Clear all peer connections
+    peersRef.current.clear();
+    
+    // Remove all video elements from the container
+    if (videoContainerRef.current) {
+      // Remove all remote video wrappers (keep local video)
+      const wrappers = videoContainerRef.current.querySelectorAll('.video-wrapper.grid-video:not(.local-video-wrapper)');
+      wrappers.forEach((wrapper) => {
+        wrapper.remove();
+      });
+    } else {
+      // Fallback: find container manually
+      const container = document.querySelector('.videos-grid-container');
+      if (container) {
+        const wrappers = container.querySelectorAll('.video-wrapper.grid-video:not(.local-video-wrapper)');
+        wrappers.forEach((wrapper) => {
+          wrapper.remove();
+        });
+      }
+    }
+    
+    console.log('WebRTC cleanup complete');
+  }, []);
+
   return {
     createPeer,
     setVideoContainerRef,
     updateMicStatus,
+    cleanup,
   };
 }
 

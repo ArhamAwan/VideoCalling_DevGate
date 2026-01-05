@@ -5,12 +5,11 @@ import ChatPanel from "./ChatPanel";
 import ControlBar from "./ControlBar";
 import { FiMic, FiMicOff } from "react-icons/fi";
 
-function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, socket, userName, roomId }) {
+function VideoCall({ stream, isConnecting, setVideoContainerRef, socket, userName, roomId, onEndCall }) {
   const localVideoRef = useRef(null);
   const videoContainerRef = useRef(null);
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
-  const [isInCall, setIsInCall] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -33,18 +32,11 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
     }
   }, [setVideoContainerRef]);
 
-  // Also update ref when container is mounted
-  useEffect(() => {
-    if (videoContainerRef.current && setVideoContainerRef) {
-      setVideoContainerRef(videoContainerRef.current);
-    }
-  }, [setVideoContainerRef]);
 
   // Auto-join when component mounts if we have socket and roomId
   useEffect(() => {
     if (socket && roomId && !hasAutoJoined.current) {
       hasAutoJoined.current = true;
-      setIsInCall(true);
       setParticipants([
         {
           id: currentUserId,
@@ -158,16 +150,14 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
   }, [socket, currentUserId, displayName, micEnabled, cameraEnabled, userName]);
 
   useEffect(() => {
-    if (isInCall) {
-      setParticipants((prev) =>
-        prev.map((p) =>
-          p.id === currentUserId
-            ? { ...p, micEnabled: micEnabled, cameraEnabled: cameraEnabled }
-            : p
-        )
-      );
-    }
-  }, [micEnabled, cameraEnabled, isInCall, currentUserId]);
+    setParticipants((prev) =>
+      prev.map((p) =>
+        p.id === currentUserId
+          ? { ...p, micEnabled: micEnabled, cameraEnabled: cameraEnabled }
+          : p
+      )
+    );
+  }, [micEnabled, cameraEnabled, currentUserId]);
 
   const toggleCamera = () => {
     if (stream) {
@@ -197,25 +187,10 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
     }
   };
 
-  const handleJoinRoom = () => {
-    if (!isInCall) {
-      onJoinRoom();
-      setIsInCall(true);
-      setParticipants([
-        {
-          id: currentUserId,
-          name: displayName,
-          micEnabled: micEnabled,
-          cameraEnabled: cameraEnabled,
-        },
-      ]);
-    }
-  };
-
   const handleEndCall = () => {
-    setIsInCall(false);
-    setParticipants([]);
-    setMessages([]);
+    if (onEndCall) {
+      onEndCall();
+    }
   };
 
   const handleSendMessage = (text) => {
@@ -290,8 +265,7 @@ function VideoCall({ stream, isConnecting, onJoinRoom, setVideoContainerRef, soc
         onToggleChat={() => setShowChat(!showChat)}
         onOptions={handleOptions}
         onEndCall={handleEndCall}
-        isInCall={isInCall}
-        onJoinRoom={handleJoinRoom}
+        isInCall={true}
       />
 
       {isConnecting && (

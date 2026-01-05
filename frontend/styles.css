@@ -109,7 +109,8 @@ body {
 }
 
 .meeting-date {
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 600;
   color: #666;
 }
 
@@ -398,12 +399,12 @@ video {
 }
 
 .status-icon.mic-on {
-  color: rgba(74,144,226,0.95);
+  color: rgba(74, 144, 226, 0.95);
   opacity: 1;
 }
 
 .status-icon.mic-off {
-  color: rgba(255,68,68,0.95);
+  color: rgba(255, 68, 68, 0.95);
   opacity: 1;
 }
 
@@ -547,7 +548,7 @@ video {
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  transition: transform .16s ease, box-shadow .16s ease, background .12s ease;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.12s ease;
   box-shadow: none;
 }
 
@@ -568,7 +569,7 @@ video {
 
 .control-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(74,144,226,0.12);
+  box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.12);
   transform: scale(1.05);
 }
 
@@ -582,7 +583,7 @@ video {
 }
 
 .control-btn.off:focus-visible {
-  box-shadow: 0 0 0 4px rgba(255,68,68,0.12);
+  box-shadow: 0 0 0 4px rgba(255, 68, 68, 0.12);
 }
 
 .control-btn.active {
@@ -616,15 +617,16 @@ video {
   border: none;
   background: #ff4444;
   color: white;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: background .12s ease, box-shadow .12s ease, transform .12s ease;
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
   margin-left: 12px;
-  box-shadow: 0 6px 16px rgba(255,68,68,0.18);
+  box-shadow: 0 6px 16px rgba(255, 68, 68, 0.18);
 }
 
-.end-call-btn svg, .join-btn svg {
+.end-call-btn svg,
+.join-btn svg {
   width: 16px;
   height: 16px;
   display: block;
@@ -637,11 +639,90 @@ video {
 
 .end-call-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 6px rgba(255,68,68,0.12);
+  box-shadow: 0 0 0 6px rgba(255, 68, 68, 0.12);
   transform: translateY(-1px);
 }
 
 /* Connecting Overlay */
+/* Call Ended Modal */
+.call-ended-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.call-ended-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px 50px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s ease-out;
+  max-width: 400px;
+  width: 90%;
+}
+
+.call-ended-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.call-ended-modal h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.call-ended-modal p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+}
+
 .connecting-overlay {
   position: fixed;
   top: 0;
@@ -670,6 +751,7 @@ video {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

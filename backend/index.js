@@ -162,6 +162,60 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("end-call", (roomId) => {
+    try {
+      if (!roomId) {
+        console.warn(`User ${socket.id} attempted to end call with no roomId.`);
+        return;
+      }
+
+      console.log(`User ${socket.id} ending call in room: ${roomId}`);
+
+      const room = rooms.get(roomId);
+      if (room && room.has(socket.id)) {
+        // Notify all other users in the room that the call has ended
+        socket.to(roomId).emit("call-ended", { roomId, endedBy: socket.id });
+
+        // Remove all users from the room
+        room.clear();
+        rooms.delete(roomId);
+        console.log(`Room ${roomId} ended and deleted`);
+      }
+    } catch (error) {
+      console.error("Error in end-call handler:", error);
+    }
+  });
+
+  socket.on("leave-room", (roomId) => {
+    try {
+      if (!roomId) {
+        console.warn(`User ${socket.id} attempted to leave room with no roomId.`);
+        return;
+      }
+
+      console.log(`User ${socket.id} leaving room: ${roomId}`);
+
+      const room = rooms.get(roomId);
+      if (room && room.has(socket.id)) {
+        room.delete(socket.id);
+        socket.leave(roomId);
+
+        // Notify others in the room
+        socket.to(roomId).emit("user-left", socket.id);
+
+        // Clean up empty rooms
+        if (room.size === 0) {
+          rooms.delete(roomId);
+          console.log(`Room ${roomId} deleted (empty)`);
+        } else {
+          console.log(`Room ${roomId} now has ${room.size} users`);
+        }
+      }
+    } catch (error) {
+      console.error("Error in leave-room handler:", error);
+    }
+  });
+
   socket.on("signal", (data) => {
     try {
       if (data?.to) {
