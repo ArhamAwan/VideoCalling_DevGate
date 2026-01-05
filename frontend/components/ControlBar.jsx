@@ -1,4 +1,5 @@
 import React from "react";
+import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiMessageSquare, FiMoreHorizontal, FiPhone, FiPhoneOff } from "react-icons/fi";
 
 function ControlBar({
   micEnabled,
@@ -15,36 +16,45 @@ function ControlBar({
   return (
     <div className="control-bar">
       <button
+        type="button"
         className={`control-btn ${!micEnabled ? "off" : ""}`}
         onClick={onToggleMic}
         title={micEnabled ? "Mute" : "Unmute"}
+        aria-label={micEnabled ? "Mute microphone" : "Unmute microphone"}
+        aria-pressed={!micEnabled ? "true" : "false"}
       >
-        {micEnabled ? "🎤" : "🔇"}
+        {micEnabled ? <FiMic /> : <FiMicOff />}
       </button>
       <button
+        type="button"
         className={`control-btn ${!cameraEnabled ? "off" : ""}`}
         onClick={onToggleCamera}
         title={cameraEnabled ? "Turn off camera" : "Turn on camera"}
+        aria-label={cameraEnabled ? "Turn off camera" : "Turn on camera"}
+        aria-pressed={!cameraEnabled ? "true" : "false"}
       >
-        📹
+        {cameraEnabled ? <FiVideo /> : <FiVideoOff />}
       </button>
       <button
+        type="button"
         className={`control-btn ${showChat ? "active" : ""}`}
         onClick={onToggleChat}
         title="Toggle chat"
+        aria-label="Toggle chat"
+        aria-pressed={showChat ? "true" : "false"}
       >
-        💬
+        <FiMessageSquare />
       </button>
-      <button className="control-btn" onClick={onOptions} title="More options">
-        ⋯
+      <button type="button" className="control-btn" onClick={onOptions} title="More options" aria-label="More options">
+        <FiMoreHorizontal />
       </button>
       {!isInCall ? (
-        <button className="join-btn" onClick={onJoinRoom}>
-          Join Room
+        <button type="button" className="join-btn" onClick={onJoinRoom}>
+          <FiPhone /> Join Room
         </button>
       ) : (
-        <button className="end-call-btn" onClick={onEndCall}>
-          End Call
+        <button type="button" className="end-call-btn" onClick={onEndCall} aria-label="End call">
+          <FiPhoneOff /> End Call
         </button>
       )}
     </div>
