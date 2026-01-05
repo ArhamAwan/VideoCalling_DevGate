@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import {
+
+  BsLink45Deg,
+} from "react-icons/bs";
 
 function HomePage({ onCreateCall, onJoinCall, error }) {
   const [userName, setUserName] = useState("");
@@ -73,7 +77,7 @@ function HomePage({ onCreateCall, onJoinCall, error }) {
                   className="copy-btn"
                   title="Copy Room ID"
                 >
-                  📋
+                  <BsLink45Deg size={18} />
                 </button>
               </div>
               <p className="room-id-hint">Share this Room ID with others who want to join your call</p>
