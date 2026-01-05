@@ -1,14 +1,10 @@
-// Message service for handling chat messages
-// Currently messages are just passed through, but this can be extended
-// to store message history, implement rate limiting, etc.
-
 class MessageService {
   constructor() {
-    // Future: Could store message history here
-    this.messageHistory = new Map(); // roomId -> Array<messages>
+
+    this.messageHistory = new Map();
   }
 
-  // Store message (for future history feature)
+
   storeMessage(roomId, message) {
     if (!this.messageHistory.has(roomId)) {
       this.messageHistory.set(roomId, []);
