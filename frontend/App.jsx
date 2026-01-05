@@ -14,13 +14,14 @@ function App() {
   const [error, setError] = useState("");
   const [showCallEnded, setShowCallEnded] = useState(false);
   const [callEndedMessage, setCallEndedMessage] = useState("");
-  const { socket, joinRoom, createRoom, checkRoomExists, endCall } = useSocket();
+  const { socket, joinRoom, createRoom, checkRoomExists, endCall } =
+    useSocket();
   const { startMedia } = useMediaStream();
-  const { createPeer, setVideoContainerRef, cleanup: cleanupWebRTC } = useWebRTC(
-    socket,
-    stream,
-    setIsConnecting
-  );
+  const {
+    createPeer,
+    setVideoContainerRef,
+    cleanup: cleanupWebRTC,
+  } = useWebRTC(socket, stream, setIsConnecting);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -73,7 +74,7 @@ function App() {
     try {
       // Check if room exists
       const exists = await checkRoomExists(joinRoomId);
-      
+
       if (!exists) {
         setError("Room not found. Please check the room ID and try again.");
         return;
@@ -97,56 +98,60 @@ function App() {
     }
   };
 
+  const performCallCleanup = useCallback(
+    (showMessage = true, message = "Call ended") => {
+      console.log("Performing call cleanup...");
 
-  const performCallCleanup = useCallback((showMessage = true, message = "Call ended") => {
-    console.log('Performing call cleanup...');
-    
-    // Show call ended modal first
-    if (showMessage) {
-      setShowCallEnded(true);
-      setCallEndedMessage(message);
-    }
-    
-    // 1. Clean up WebRTC peer connections
-    if (cleanupRef.current) {
-      cleanupRef.current();
-      cleanupRef.current = null;
-    }
-    
-    // 2. Clean up all WebRTC connections and video elements
-    if (cleanupWebRTC) {
-      cleanupWebRTC();
-    }
-    
-    // 3. Stop all media tracks
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop();
-        console.log(`Stopped ${track.kind} track`);
-      });
-    }
-    
-    // Wait 2 seconds before returning to home (to show the modal)
-    setTimeout(() => {
-      // 4. Reset state to go back to home page
-      setIsInCall(false);
-      setIsConnecting(false);
-      setRoomId("");
-      setUserName("");
-      setError("");
-      setShowCallEnded(false);
-      setCallEndedMessage("");
-      
-      // 5. Restart media stream for next call
-      startMedia().then((newStream) => {
-        setStream(newStream);
-      }).catch((error) => {
-        console.error("Failed to restart media after ending call:", error);
-      });
-      
-      console.log('Call cleanup complete');
-    }, 2000);
-  }, [cleanupWebRTC, stream, startMedia]);
+      // Show call ended modal first
+      if (showMessage) {
+        setShowCallEnded(true);
+        setCallEndedMessage(message);
+      }
+
+      // 1. Clean up WebRTC peer connections
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+
+      // 2. Clean up all WebRTC connections and video elements
+      if (cleanupWebRTC) {
+        cleanupWebRTC();
+      }
+
+      // 3. Stop all media tracks
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          track.stop();
+          console.log(`Stopped ${track.kind} track`);
+        });
+      }
+
+      // Wait 2 seconds before returning to home (to show the modal)
+      setTimeout(() => {
+        // 4. Reset state to go back to home page
+        setIsInCall(false);
+        setIsConnecting(false);
+        setRoomId("");
+        setUserName("");
+        setError("");
+        setShowCallEnded(false);
+        setCallEndedMessage("");
+
+        // 5. Restart media stream for next call
+        startMedia()
+          .then((newStream) => {
+            setStream(newStream);
+          })
+          .catch((error) => {
+            console.error("Failed to restart media after ending call:", error);
+          });
+
+        console.log("Call cleanup complete");
+      }, 2000);
+    },
+    [cleanupWebRTC, stream, startMedia]
+  );
 
   // Listen for room-not-found errors
   useEffect(() => {
@@ -170,7 +175,7 @@ function App() {
     if (!socket) return;
 
     const handleCallEnded = (data) => {
-      console.log('Call ended by another user:', data);
+      console.log("Call ended by another user:", data);
       // Perform cleanup with message
       performCallCleanup(true, "Call ended by another participant");
     };
@@ -183,13 +188,13 @@ function App() {
   }, [socket, performCallCleanup]);
 
   const handleEndCall = () => {
-    console.log('Ending call...');
-    
+    console.log("Ending call...");
+
     // Notify server and all other participants that the call is ending
     if (roomId) {
       endCall(roomId);
     }
-    
+
     // Perform cleanup with message
     performCallCleanup(true, "Call ended");
   };
