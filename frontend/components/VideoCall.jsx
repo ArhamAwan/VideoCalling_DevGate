@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
+import { useTheme } from "../hooks/useTheme";
 import {
   BsMicFill,
   BsMicMuteFill,
@@ -22,6 +23,7 @@ function VideoCall({
   roomId,
   onEndCall,
 }) {
+  const { theme, toggleTheme } = useTheme();
   const localVideoRef = useRef(null);
   const videoContainerRef = useRef(null);
 

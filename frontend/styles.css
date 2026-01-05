@@ -22,6 +22,25 @@
   --font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
+/* Dark mode variables */
+[data-theme="dark"] {
+  --bg-app: #0f0f0f;
+  --bg-surface: #29292987;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --border: #2a2a2a;
+  --icon-bg: #2a2a2a;
+}
+
+* {
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -78,6 +97,7 @@ html {
   justify-content: space-between;
   padding: 0 32px;
   background-color: var(--bg-app); /* Transparent usually, but matching bg */
+  margin-right: 32px;
 }
 
 .brand-section {
@@ -825,5 +845,29 @@ html {
   }
   .participant-preview {
     display: none; /* Hide avatars in header on very small screens to save space */
+  }
+  .theme-toggle-btn {
+    padding: 8px 12px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .theme-toggle-btn:hover {
+    background-color: var(--icon-bg);
+  }
+  [data-theme="dark"] .video-wrapper {
+    background-color: #000;
+  }
+
+  [data-theme="dark"] .videos-grid-container {
+    background-color: #0a0a0a;
   }
 }

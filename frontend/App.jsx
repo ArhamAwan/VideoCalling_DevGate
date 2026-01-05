@@ -3,6 +3,7 @@ import { useMediaStream } from "./hooks/useMediaStream";
 import { useSocket } from "./hooks/useSocket";
 import { useWebRTC } from "./hooks/useWebRTC";
 import VideoCall from "./components/VideoCall";
+import { useTheme } from "./hooks/useTheme";
 import HomePage from "./components/HomePage";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
   const [callEndedMessage, setCallEndedMessage] = useState("");
   const { socket, joinRoom, createRoom, checkRoomExists, leaveRoom, endCall } =
     useSocket();
+  const { theme, toggleTheme } = useTheme();
   const { startMedia } = useMediaStream();
   const {
     createPeer,
@@ -211,6 +213,27 @@ function App() {
 
   return (
     <>
+      {/* Optional: Add theme toggle button */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: "fixed",
+          top: "16px",
+          right: "16px",
+          zIndex: 10000,
+          padding: "8px 12px",
+          borderRadius: "8px",
+          border: "none",
+          backgroundColor: "var(--bg-surface)",
+          color: "var(--text-primary)",
+          cursor: "pointer",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+        title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+      >
+        {theme === "light" ? "🌙" : "☀️"}
+      </button>
+
       {!isInCall ? (
         <HomePage
           onCreateCall={handleCreateCall}
