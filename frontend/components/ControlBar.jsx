@@ -43,15 +43,7 @@ function ControlBar({
       >
         {cameraEnabled ? <FiVideo /> : <FiVideoOff />}
       </button>
-      <button
-        type="button"
-        className="control-btn"
-        onClick={onOptions}
-        title="More options"
-        aria-label="More options"
-      >
-        <FiMoreHorizontal />
-      </button>
+
       <button
         type="button"
         className="end-call-btn"
